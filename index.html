@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/[email protected]/dist/xlsx.full.min.js"></script>
 <style>
   :root{
     --ink:#1B2A4A;
@@ -271,6 +274,7 @@
   }
   .toast.show{display:block;}
   .logout-link{background:none; border:none; color:var(--ink-soft); font-size:0.82rem; cursor:pointer; text-decoration:underline;}
+  .report-toolbar{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -278,7 +282,7 @@
 <header>
   <div class="brand">
     <h1>ඡන්ද මධ්‍යස්ථානය</h1>
-    <p>Live poll</p>
+    <p>Live poll · Supabase backed</p>
   </div>
   <nav class="tabs">
     <button id="tabVoteBtn" class="active" onclick="switchTab('vote')">ඡන්දය දෙන්න</button>
@@ -592,7 +596,19 @@ async function loadAdminResults(){
 
   const respondents = new Set((votes||[]).map(v=>v.voter_token)).size;
 
-  let html = `<div class="card">
+  const reportData = {
+    pollTitle: poll.title,
+    isActive: poll.is_active,
+    totalRespondents: respondents,
+    generatedAt: new Date(),
+    questions: []
+  };
+
+  let html = `<div class="report-toolbar">
+    <button class="small-btn" id="pdfBtn" onclick="downloadResultsAsPDF()">PDF ලෙස බාගත කරන්න</button>
+    <button class="small-btn" id="xlsxBtn" onclick="downloadResultsAsExcel()">Excel ලෙස බාගත කරන්න</button>
+  </div>
+  <div class="card" id="resultsPrintArea">
     <div class="poll-title">${escapeHtml(poll.title)}</div>
     <p class="muted">මුළු ප්‍රතිචාර දක්වූවන් ගණන: <strong>${respondents}</strong> ${poll.is_active ? '· <span style="color:#1B2A4A;">ක්‍රියාත්මකයි</span>' : '· අක්‍රියයි'}</p>`;
 
@@ -609,6 +625,13 @@ async function loadAdminResults(){
     // ප්‍රතිඵල, ලැබුණු ඡන්ද ගණන අනුව අවරෝහණ පිළිවෙළට (වැඩියෙන් අඩුවට)
     opts.sort((a,b)=> b.count - a.count);
 
+    const questionReport = {
+      text: q.question_text,
+      allowMultiple: q.allow_multiple,
+      respondents: qRespondents,
+      options: []
+    };
+
     html += `<div class="q-report">
       <div class="q-text" style="margin-bottom:4px;">${idx+1}. ${escapeHtml(q.question_text)} ${q.allow_multiple ? '<span class="muted">(බහුවරණ)</span>' : ''}</div>
       <p class="muted" style="margin:0 0 10px;">මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව: ${qRespondents}</p>`;
@@ -618,11 +641,13 @@ async function loadAdminResults(){
       const forPct = Math.round((forCount/denom)*100);
       const againstCount = Math.max(denom - forCount, 0);
       const againstPct = Math.max(100 - forPct, 0);
+      questionReport.options.push({ name: o.option_text, forCount, forPct, againstCount, againstPct });
       html += `<div class="bar-row">
         <div class="opt-name"><span>${escapeHtml(o.option_text)}</span><span>+${forCount}(${forPct}%) &nbsp;-${againstCount}(${againstPct}%)</span></div>
         <div class="bar-track"><div class="bar-fill" style="width:${forPct}%;"></div></div>
       </div>`;
     });
+    reportData.questions.push(questionReport);
     html += `</div>`;
   });
 
@@ -635,6 +660,94 @@ async function loadAdminResults(){
   </div>`;
 
   el.innerHTML = html;
+  window._reportData = reportData;
+}
+
+function fileDateStamp(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
+
+/* PDF export: captures the rendered report area as an image so Sinhala text
+   renders exactly as shown on screen (client-side PDF libraries don't shape
+   Sinhala glyphs correctly as native text). */
+async function downloadResultsAsPDF(){
+  const target = document.getElementById('resultsPrintArea');
+  const btn = document.getElementById('pdfBtn');
+  if(!target || !window.html2canvas || !window.jspdf){
+    showToast('PDF library එක load වී නැත.', true);
+    return;
+  }
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'සකසමින්...';
+  try{
+    const canvas = await html2canvas(target, { scale:2, backgroundColor:'#FBF9F3' });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p','mm','a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const imgWidth = pageWidth - margin*2;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = margin;
+    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - margin*2);
+
+    while(heightLeft > 0){
+      position = heightLeft - imgHeight + margin;
+      doc.addPage();
+      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - margin*2);
+    }
+
+    doc.save(`poll-results-${fileDateStamp()}.pdf`);
+  } catch(err){
+    showToast('PDF සෑදීමේ දෝෂයක්: ' + err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+/* Excel export: builds a plain data sheet from the same reportData used on screen. */
+function downloadResultsAsExcel(){
+  const data = window._reportData;
+  const btn = document.getElementById('xlsxBtn');
+  if(!data || !window.XLSX){
+    showToast('Excel library එක load වී නැත.', true);
+    return;
+  }
+  try{
+    const rows = [];
+    rows.push(['ඡන්ද විමසුමේ මාතෘකාව', data.pollTitle]);
+    rows.push(['ස්ථිතිය', data.isActive ? 'ක්‍රියාත්මකයි' : 'අක්‍රියයි']);
+    rows.push(['මුළු ප්‍රතිචාර දක්වූවන් ගණන', data.totalRespondents]);
+    rows.push(['වාර්තාව සකස් කළ දිනය', data.generatedAt.toLocaleString('si-LK')]);
+    rows.push([]);
+
+    data.questions.forEach((q, idx)=>{
+      rows.push([`${idx+1}. ${q.text}${q.allowMultiple ? ' (බහුවරණ)' : ''}`]);
+      rows.push(['මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව', q.respondents]);
+      rows.push(['විකල්පය', 'ඡන්ද ගණන (+)', 'ප්‍රතිශතය (+)', 'ඡන්ද ගණන (-)', 'ප්‍රතිශතය (-)']);
+      q.options.forEach(o=>{
+        rows.push([o.name, o.forCount, o.forPct + '%', o.againstCount, o.againstPct + '%']);
+      });
+      rows.push([]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:38},{wch:16},{wch:14},{wch:16},{wch:14}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'ප්‍රතිඵල');
+    XLSX.writeFile(wb, `poll-results-${fileDateStamp()}.xlsx`);
+  } catch(err){
+    showToast('Excel සෑදීමේ දෝෂයක්: ' + err.message, true);
+  }
 }
 
 async function resetPollData(confirmFirst){
