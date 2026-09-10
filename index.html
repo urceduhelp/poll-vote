@@ -278,7 +278,7 @@
 <header>
   <div class="brand">
     <h1>ඡන්ද මධ්‍යස්ථානය</h1>
-    <p>Live poll </p>
+    <p>Live poll · Supabase backed</p>
   </div>
   <nav class="tabs">
     <button id="tabVoteBtn" class="active" onclick="switchTab('vote')">ඡන්දය දෙන්න</button>
@@ -359,8 +359,24 @@ function switchTab(tab){
   document.getElementById('adminView').classList.toggle('active', tab==='admin');
   document.getElementById('tabVoteBtn').classList.toggle('active', tab==='vote');
   document.getElementById('tabAdminBtn').classList.toggle('active', tab==='admin');
-  if(tab==='vote') loadVoteView();
+  if(tab==='vote'){ stopResultsAutoRefresh(); loadVoteView(); }
   if(tab==='admin') checkAdminSession();
+}
+
+/* ---------- RESULTS AUTO-REFRESH (every 30 minutes) ---------- */
+const RESULTS_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
+let resultsAutoRefreshTimer = null;
+
+function startResultsAutoRefresh(){
+  stopResultsAutoRefresh();
+  resultsAutoRefreshTimer = setInterval(loadAdminResults, RESULTS_REFRESH_MS);
+}
+
+function stopResultsAutoRefresh(){
+  if(resultsAutoRefreshTimer){
+    clearInterval(resultsAutoRefreshTimer);
+    resultsAutoRefreshTimer = null;
+  }
 }
 
 /* ============================================================
@@ -505,6 +521,7 @@ function checkAdminSession(){
     document.getElementById('adminPanel').style.display = 'block';
     switchAdminTab('results');
   } else {
+    stopResultsAutoRefresh();
     document.getElementById('adminLogin').style.display = 'block';
     document.getElementById('adminPanel').style.display = 'none';
   }
@@ -524,6 +541,7 @@ function tryAdminLogin(){
 
 function adminLogout(){
   sessionStorage.removeItem('poll_admin_ok');
+  stopResultsAutoRefresh();
   checkAdminSession();
 }
 
@@ -532,8 +550,8 @@ function switchAdminTab(tab){
   document.getElementById('atCreate').classList.toggle('active', tab==='create');
   document.getElementById('adminResults').style.display = tab==='results' ? 'block':'none';
   document.getElementById('adminCreate').style.display = tab==='create' ? 'block':'none';
-  if(tab==='results') loadAdminResults();
-  if(tab==='create') renderPollBuilder();
+  if(tab==='results'){ loadAdminResults(); startResultsAutoRefresh(); }
+  if(tab==='create'){ stopResultsAutoRefresh(); renderPollBuilder(); }
 }
 
 /* ============================================================
@@ -579,19 +597,30 @@ async function loadAdminResults(){
     <p class="muted">මුළු ප්‍රතිචාර දක්වූවන් ගණන: <strong>${respondents}</strong> ${poll.is_active ? '· <span style="color:#1B2A4A;">ක්‍රියාත්මකයි</span>' : '· අක්‍රියයි'}</p>`;
 
   questions.forEach((q, idx)=>{
-    const opts = options.filter(o=>o.question_id===q.id);
     const qVotes = (votes||[]).filter(v=>v.question_id===q.id);
-    const total = qVotes.length || 1;
+    // මෙම ප්‍රශ්නයට ඇත්තටම පිළිතුරු දුන් පිරිස (distinct voters) - +/- ප්‍රතිශතයේ හරය
+    const qRespondents = new Set(qVotes.map(v=>v.voter_token)).size;
+    const denom = qRespondents || 1;
+
+    let opts = options.filter(o=>o.question_id===q.id).map(o=>{
+      const count = qVotes.filter(v=>v.option_id===o.id).length;
+      return { ...o, count };
+    });
+    // ප්‍රතිඵල, ලැබුණු ඡන්ද ගණන අනුව අවරෝහණ පිළිවෙළට (වැඩියෙන් අඩුවට)
+    opts.sort((a,b)=> b.count - a.count);
 
     html += `<div class="q-report">
-      <div class="q-text" style="margin-bottom:10px;">${idx+1}. ${escapeHtml(q.question_text)} ${q.allow_multiple ? '<span class="muted">(බහුවරණ)</span>' : ''}</div>`;
+      <div class="q-text" style="margin-bottom:4px;">${idx+1}. ${escapeHtml(q.question_text)} ${q.allow_multiple ? '<span class="muted">(බහුවරණ)</span>' : ''}</div>
+      <p class="muted" style="margin:0 0 10px;">මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව: ${qRespondents}</p>`;
 
     opts.forEach(o=>{
-      const count = qVotes.filter(v=>v.option_id===o.id).length;
-      const pct = Math.round((count/total)*100);
+      const forCount = o.count;
+      const forPct = Math.round((forCount/denom)*100);
+      const againstCount = Math.max(denom - forCount, 0);
+      const againstPct = Math.max(100 - forPct, 0);
       html += `<div class="bar-row">
-        <div class="opt-name"><span>${escapeHtml(o.option_text)}</span><span>${count} (${pct}%)</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;"></div></div>
+        <div class="opt-name"><span>${escapeHtml(o.option_text)}</span><span>+${forCount}(${forPct}%) &nbsp;-${againstCount}(${againstPct}%)</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${forPct}%;"></div></div>
       </div>`;
     });
     html += `</div>`;
