@@ -2,116 +2,88 @@
 <html lang="si">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ඡන්ද මධ්‍යස්ථානය — Poll</title>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ඡන්ද විමසුම</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;700&family=Fraunces:wght@600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root{--ink:#1B2A4A;--soft:#3C4A6B;--paper:#EDE6D6;--dark:#E1D8C2;--stamp:#AA3327;--line:#C9BD9F;--white:#FBF9F3}
+:root{--bg:#F3F6F4;--card:#fff;--ink:#12302B;--soft:#5B7570;--line:#D5E0DC;--main:#0E7C66;--main2:#0A5E4D;--warn:#C2412D;--tint:#E3F1ED}
+@media(prefers-color-scheme:dark){:root{--bg:#0E1A18;--card:#152522;--ink:#E6F2EF;--soft:#8FAAA4;--line:#27403B;--main:#2FBF9F;--main2:#4FD6B8;--warn:#F0735F;--tint:#1B3530}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 'IBM Plex Sans',sans-serif;min-height:100vh}
-header{border-bottom:2px solid var(--ink);padding:28px 24px 20px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;max-width:760px;margin:0 auto}
-h1{font:700 1.7rem 'Spectral',serif;margin:0}
-.brand p{margin:4px 0 0;font-size:.85rem;color:var(--soft)}
-nav{display:flex;gap:18px}
-nav button{background:none;border:0;font:inherit;color:var(--soft);cursor:pointer;padding:4px 0;border-bottom:2px solid transparent}
-nav button.active{color:var(--ink);border-bottom-color:var(--stamp);font-weight:600}
-main{max-width:760px;margin:0 auto;padding:36px 24px 80px}
-.view{display:none}.view.active{display:block}
-.card{background:var(--white);border:1px solid var(--line);padding:28px 26px;margin-bottom:22px}
-.poll-title{font:600 1.5rem 'Spectral',serif;margin:0 0 6px}
-.muted{color:var(--soft);font-size:.85rem}
-.qb{border-top:1px dashed var(--line);padding:20px 0}
-.qh{display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
-.qn{font:700 1.1rem 'Spectral',serif;color:var(--stamp)}
-.qt{font-weight:600;font-size:1.05rem}
-.hint{font-size:.78rem;color:var(--soft);margin:2px 0 12px 26px}
-.opts{display:flex;flex-direction:column;gap:8px;margin-left:26px}
-.opt{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);cursor:pointer;background:var(--paper)}
-.opt:hover{background:var(--dark)}
-.opt input{accent-color:var(--stamp);width:16px;height:16px}
-.btn{background:var(--ink);color:var(--white);border:0;padding:12px 24px;font:500 .95rem 'IBM Plex Sans',sans-serif;cursor:pointer}
-.btn:hover{background:var(--stamp)}.btn:disabled{background:#999;cursor:not-allowed}
-.sm{background:none;border:1px solid var(--soft);color:var(--soft);padding:6px 12px;font-size:.8rem;cursor:pointer}
-.sm:hover{border-color:var(--ink);color:var(--ink)}
-.sm.red{border-color:var(--stamp);color:var(--stamp)}.sm.red:hover{background:var(--stamp);color:var(--white)}
-.stamp{text-align:center;padding:50px 20px}
-.circle{width:96px;height:96px;border:3px solid var(--stamp);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;transform:rotate(-8deg);color:var(--stamp);font:700 .85rem 'Spectral',serif;line-height:1.2}
-.empty{text-align:center;padding:60px 20px;color:var(--soft)}
-.err{color:var(--stamp);font-size:.85rem;margin-top:6px}
-.login{max-width:340px;margin:60px auto}
-.login input,.field input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);background:var(--white);font:inherit;margin-bottom:12px}
-.login .btn{width:100%}
-.atabs{display:flex;border-bottom:1px solid var(--line)}
-.atabs button{background:none;border:0;padding:10px 18px;cursor:pointer;color:var(--soft);border-bottom:2px solid transparent;font:inherit}
-.atabs button.active{color:var(--ink);border-bottom-color:var(--stamp);font-weight:600}
-.bar{margin-bottom:14px}
-.bar .n{font-size:.9rem;margin-bottom:4px;display:flex;justify-content:space-between;gap:10px}
-.track{background:var(--dark);height:10px}.fill{background:var(--stamp);height:10px}
-.qr{border-top:1px dashed var(--line);padding:18px 0}
-.field label{display:block;font-size:.82rem;color:var(--soft);margin-bottom:5px}
-.qbox{border:1px solid var(--line);padding:18px;margin-bottom:16px;background:var(--paper)}
-.top{display:flex;justify-content:space-between;gap:10px}
-.orow{display:flex;gap:8px;margin-bottom:8px}.orow input{flex:1;padding:8px 10px;border:1px solid var(--line);margin:0}
-.x{background:none;border:0;color:var(--stamp);cursor:pointer;font-size:1.1rem}
-.multi{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.85rem}
-.danger{border:1px solid var(--stamp);padding:18px;margin-top:30px}
-.danger h3{margin:0 0 6px;font-size:.95rem;color:var(--stamp)}
-.toolbar{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);color:var(--white);padding:12px 20px;font-size:.88rem;display:none;z-index:50}
-.toast.show{display:block}
-.link{background:none;border:0;color:var(--soft);font-size:.82rem;cursor:pointer;text-decoration:underline}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.7 'Noto Sans Sinhala',system-ui,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:20px 18px 80px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0 20px}
+h1{margin:0;font:800 1.6rem 'Fraunces','Noto Sans Sinhala',serif}
+nav{display:flex;background:var(--tint);border-radius:999px;padding:4px}
+nav button{border:0;background:none;color:var(--soft);font:inherit;font-size:.9rem;padding:6px 16px;border-radius:999px;cursor:pointer}
+nav button.on{background:var(--main);color:#fff;font-weight:500}
+.view{display:none}.view.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:18px}
+h2{margin:0 0 4px;font:600 1.3rem 'Fraunces','Noto Sans Sinhala',serif}
+.m{color:var(--soft);font-size:.85rem;margin:0}
+.q{padding:18px 0;border-top:1px solid var(--line)}
+.q b{display:block;margin-bottom:2px}
+.opt{display:flex;gap:12px;align-items:center;padding:11px 14px;margin-top:8px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer}
+.opt:has(input:checked){border-color:var(--main);background:var(--tint)}
+.opt input{accent-color:var(--main);width:18px;height:18px;margin:0}
+.btn{background:var(--main);color:#fff;border:0;border-radius:10px;padding:12px 22px;font:500 .95rem inherit;font-family:inherit;cursor:pointer}
+.btn:hover{background:var(--main2)}.btn:disabled{opacity:.5;cursor:wait}
+.sm{background:none;border:1.5px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+.sm:hover{border-color:var(--main)}.sm.red{color:var(--warn);border-color:var(--warn)}
+input[type=text],input[type=email],input[type=password]{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;margin:4px 0 10px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--main);outline-offset:2px}
+.err{color:var(--warn);font-size:.85rem;margin-top:8px}
+.done{text-align:center;padding:48px 16px}
+.tick{width:72px;height:72px;border-radius:50%;background:var(--main);color:#fff;font-size:2.2rem;line-height:72px;margin:0 auto 14px}
+.tabs{display:flex;gap:6px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.tabs .sm.on{background:var(--main);color:#fff;border-color:var(--main)}
+.bar{margin-top:12px}.bar div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+.tr{height:10px;background:var(--tint);border-radius:5px;overflow:hidden}.tr i{display:block;height:100%;background:var(--main)}
+.box{border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.row{display:flex;gap:8px;align-items:center}
+.x{background:none;border:0;color:var(--warn);font-size:1.1rem;cursor:pointer}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.danger{border:1.5px solid var(--warn);border-radius:12px;padding:16px;margin-top:20px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-size:.88rem;display:none;z-index:9}
 </style>
 </head>
 <body>
-<header>
-<div class="brand"><h1>ඡන්ද මධ්‍යස්ථානය</h1><p>Live poll</p></div>
-<nav><button id="tv" class="active" onclick="tab('vote')">ඡන්දය දෙන්න</button><button id="ta" onclick="tab('admin')">පරිපාලක</button></nav>
-</header>
-<main>
-<section id="voteView" class="view active"><div id="voteContent"></div></section>
-<section id="adminView" class="view">
-<div id="adminLogin" class="login card">
-<p class="poll-title" style="font-size:1.15rem">පරිපාලක පිවිසුම</p>
-<p class="muted">ඔබේ email සහ මුරපදය ඇතුළත් කරන්න</p>
-<input type="email" id="aEmail" placeholder="Email" autocomplete="username">
-<input type="password" id="aPass" placeholder="මුරපදය" autocomplete="current-password">
-<button class="btn" id="aBtn" onclick="login()">පිවිසෙන්න</button>
-<div id="aErr" class="err"></div>
+<div class="wrap">
+<header><h1>ඡන්ද විමසුම</h1>
+<nav><button id="tv" class="on" onclick="tab('vote')">ඡන්දය දෙන්න</button><button id="ta" onclick="tab('admin')">පරිපාලක</button></nav></header>
+
+<section id="vv" class="view on"></section>
+
+<section id="av" class="view">
+<div id="login" class="card" style="max-width:380px;margin:30px auto">
+<h2>පරිපාලක පිවිසුම</h2><p class="m" style="margin-bottom:12px">Email සහ මුරපදය ඇතුළත් කරන්න</p>
+<input type="email" id="em" placeholder="Email" autocomplete="username">
+<input type="password" id="pw" placeholder="මුරපදය" autocomplete="current-password">
+<button class="btn" id="lb" style="width:100%" onclick="login()">පිවිසෙන්න</button><div id="le" class="err"></div>
 </div>
-<div id="adminPanel" style="display:none">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-<div class="atabs"><button id="atR" class="active" onclick="atab('results')">ප්‍රතිඵල</button><button id="atC" onclick="atab('create')">නව විමසුමක්</button></div>
-<button class="link" onclick="logout()">පිටවීම</button>
-</div>
-<div id="adminResults"></div><div id="adminCreate" style="display:none"></div>
+<div id="panel" style="display:none">
+<div class="tabs"><button class="sm on" id="t1" onclick="atab('r')">ප්‍රතිඵල</button><button class="sm" id="t2" onclick="atab('c')">නව විමසුමක්</button><button class="sm" style="margin-left:auto" onclick="logout()">පිටවීම</button></div>
+<div id="res"></div><div id="cre" style="display:none"></div>
 </div>
 </section>
-</main>
-<div id="toast" class="toast"></div>
+</div>
+<div id="toast"></div>
 
 <script>
-const SUPABASE_URL="https://jcijglwpkfluyzrltimk.supabase.co/";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaWpnbHdwa2ZsdXl6cmx0aW1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MzU3OTUsImV4cCI6MjA4MjQxMTc5NX0.dvT8OiyVEiYn_DhkMakmSq1Vvr4REDr0kYPnyqCtWHs";
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const sb=supabase.createClient("https://jcijglwpkfluyzrltimk.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaWpnbHdwa2ZsdXl6cmx0aW1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MzU3OTUsImV4cCI6MjA4MjQxMTc5NX0.dvT8OiyVEiYn_DhkMakmSq1Vvr4REDr0kYPnyqCtWHs");
 const $=i=>document.getElementById(i),ZERO='00000000-0000-0000-0000-000000000000';
 const esc=s=>{const d=document.createElement('div');d.textContent=s??'';return d.innerHTML};
-const escA=s=>(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-function toast(m,e){const t=$('toast');t.textContent=m;t.style.background=e?'#AA3327':'#1B2A4A';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200)}
-function voterToken(){let t=localStorage.getItem('poll_voter_token');if(!t){t=crypto.randomUUID();localStorage.setItem('poll_voter_token',t)}return t}
+const escA=s=>esc(s).replace(/"/g,'&quot;');
+function toast(m,e){const t=$('toast');t.textContent=m;t.style.background=e?'#C2412D':'';t.style.color=e?'#fff':'';t.style.display='block';setTimeout(()=>t.style.display='none',3200)}
+function token(){let t=localStorage.getItem('poll_voter_token');if(!t){t=crypto.randomUUID();localStorage.setItem('poll_voter_token',t)}return t}
+let timer=null;const stopT=()=>{clearInterval(timer);timer=null};
 
 function tab(t){
-  $('voteView').classList.toggle('active',t==='vote');$('adminView').classList.toggle('active',t==='admin');
-  $('tv').classList.toggle('active',t==='vote');$('ta').classList.toggle('active',t==='admin');
-  if(t==='vote'){stopRefresh();loadVote()}else checkAdmin();
+  $('vv').classList.toggle('on',t==='vote');$('av').classList.toggle('on',t==='admin');
+  $('tv').classList.toggle('on',t==='vote');$('ta').classList.toggle('on',t==='admin');
+  if(t==='vote'){stopT();loadVote()}else checkAdmin();
 }
-let timer=null;
-const startRefresh=()=>{stopRefresh();timer=setInterval(loadResults,30*60*1000)};
-const stopRefresh=()=>{if(timer){clearInterval(timer);timer=null}};
-
 async function fetchPoll(activeOnly){
   let q=sb.from('polls').select('id,title,is_active,created_at').order('created_at',{ascending:false}).limit(1);
   if(activeOnly)q=q.eq('is_active',true);
@@ -123,71 +95,67 @@ async function fetchPoll(activeOnly){
   return{poll,qs,os,ids};
 }
 
-/* ---------- VOTE ---------- */
+/* ---- vote ---- */
 async function loadVote(){
-  const el=$('voteContent');el.innerHTML='<div class="empty"><h2>පූරණය වෙමින්...</h2></div>';
-  let d;try{d=await fetchPoll(true)}catch(e){el.innerHTML=`<div class="empty"><h2>දෝෂයක්</h2><p>${esc(e.message)}</p></div>`;return}
-  if(!d){el.innerHTML='<div class="empty"><h2>දැනට ක්‍රියාත්මක ඡන්ද විමසුමක් නැත</h2><p>පරිපාලකවරයා නව විමසුමක් ප්‍රකාශයට පත් කරන තෙක් රැඳී සිටින්න.</p></div>';return}
+  const el=$('vv');el.innerHTML='<p class="m" style="text-align:center;padding:40px">පූරණය වෙමින්...</p>';
+  let d;try{d=await fetchPoll(true)}catch(e){el.innerHTML=`<div class="card"><h2>දෝෂයක්</h2><p class="err">${esc(e.message)}</p></div>`;return}
+  if(!d){el.innerHTML='<div class="card done"><h2>දැනට ක්‍රියාත්මක විමසුමක් නැත</h2><p class="m">පරිපාලකවරයා නව විමසුමක් පළ කරන තෙක් රැඳී සිටින්න.</p></div>';return}
   const{poll,qs,os}=d;
   if(localStorage.getItem('voted_'+poll.id)==='true'){
-    el.innerHTML=`<div class="card stamp"><div class="circle">ඡන්දය<br>සටහන් විය</div><p class="muted">ඔබ දැනටමත් "${esc(poll.title)}" සඳහා ඡන්දය ලබා දී ඇත. ස්තුතියි!</p></div>`;return;
-  }
-  let h=`<form class="card" id="ballot"><div class="poll-title">${esc(poll.title)}</div><p class="muted" style="margin-bottom:20px">ඔබේ තේරීම් සලකුණු කර පහළින් ඉදිරිපත් කරන්න.</p>`;
+    el.innerHTML=`<div class="card done"><div class="tick">✓</div><h2>ඡන්දය සටහන් විය</h2><p class="m">"${esc(poll.title)}" සඳහා ඔබ දැනටමත් ඡන්දය දී ඇත. ස්තුතියි!</p></div>`;return}
+  let h=`<form class="card" id="f"><h2>${esc(poll.title)}</h2><p class="m" style="margin-bottom:10px">සියලුම ප්‍රශ්නවලට පිළිතුරු දී පහළින් ඉදිරිපත් කරන්න.</p>`;
   qs.forEach((q,i)=>{
     const t=q.allow_multiple?'checkbox':'radio';
-    h+=`<div class="qb"><div class="qh"><span class="qn">${i+1}.</span><span class="qt">${esc(q.question_text)}</span></div><div class="hint">${q.allow_multiple?'එකකට වඩා තෝරාගත හැක':'එකක් පමණක් තෝරන්න'}</div><div class="opts">`;
-    os.filter(o=>o.question_id===q.id).forEach(o=>{h+=`<label class="opt"><input type="${t}" name="q_${q.id}" value="${o.id}"><span>${esc(o.option_text)}</span></label>`});
-    h+='</div></div>';
+    h+=`<div class="q"><b>${i+1}. ${esc(q.question_text)}</b><span class="m">${q.allow_multiple?'එකකට වඩා තෝරාගත හැක':'එකක් පමණක් තෝරන්න'}</span>`;
+    os.filter(o=>o.question_id===q.id).forEach(o=>h+=`<label class="opt"><input type="${t}" name="q_${q.id}" value="${o.id}"><span>${esc(o.option_text)}</span></label>`);
+    h+='</div>';
   });
-  h+='<button type="submit" class="btn" id="cast" style="margin-top:20px">ඡන්දය සටහන් කරන්න</button><div id="vErr" class="err"></div></form>';
+  h+='<button class="btn" id="cast" style="margin-top:14px">ඡන්දය සටහන් කරන්න</button><div id="ve" class="err"></div></form>';
   el.innerHTML=h;
-  $('ballot').addEventListener('submit',e=>{e.preventDefault();submit(poll,qs)});
+  $('f').addEventListener('submit',e=>{e.preventDefault();submitVote(poll,qs)});
 }
-async function submit(poll,qs){
-  const err=$('vErr'),btn=$('cast');err.textContent='';const rows=[];
+async function submitVote(poll,qs){
+  const err=$('ve'),btn=$('cast');err.textContent='';const rows=[];
   for(const q of qs){
     const c=document.querySelectorAll(`input[name="q_${q.id}"]:checked`);
     if(!c.length){err.textContent='කරුණාකර සියලුම ප්‍රශ්නවලට පිළිතුරු දෙන්න.';return}
-    c.forEach(x=>rows.push({question_id:q.id,option_id:x.value,voter_token:voterToken()}));
+    c.forEach(x=>rows.push({question_id:q.id,option_id:x.value,voter_token:token()}));
   }
-  btn.disabled=true;btn.textContent='ඉදිරිපත් කරමින්...';
+  btn.disabled=true;
   const{error}=await sb.from('votes').insert(rows);
-  if(error){err.textContent='දෝෂයක්: '+error.message;btn.disabled=false;btn.textContent='ඡන්දය සටහන් කරන්න';return}
+  if(error){err.textContent='දෝෂයක්: '+error.message;btn.disabled=false;return}
   localStorage.setItem('voted_'+poll.id,'true');loadVote();toast('ඔබේ ඡන්දය සටහන් විය. ස්තුතියි!');
 }
 
-/* ---------- ADMIN AUTH (Supabase Authentication) ---------- */
-function showPanel(on){$('adminLogin').style.display=on?'none':'block';$('adminPanel').style.display=on?'block':'none'}
-async function isAdmin(uid){
-  const{data,error}=await sb.from('admins').select('user_id').eq('user_id',uid).maybeSingle();
-  return !error&&!!data;
-}
+/* ---- admin auth ---- */
+function show(on){$('login').style.display=on?'none':'block';$('panel').style.display=on?'block':'none'}
+async function isAdmin(uid){const{data,error}=await sb.from('admins').select('user_id').eq('user_id',uid).maybeSingle();return !error&&!!data}
 async function checkAdmin(){
   const{data:{session}}=await sb.auth.getSession();
-  if(session&&await isAdmin(session.user.id)){showPanel(true);atab('results')}
-  else{stopRefresh();showPanel(false)}
+  if(session&&await isAdmin(session.user.id)){show(true);atab('r')}else{stopT();show(false)}
 }
 async function login(){
-  const email=$('aEmail').value.trim(),pass=$('aPass').value,err=$('aErr'),btn=$('aBtn');err.textContent='';
+  const email=$('em').value.trim(),pass=$('pw').value,err=$('le'),b=$('lb');err.textContent='';
   if(!email||!pass){err.textContent='Email සහ මුරපදය දෙකම ඇතුළත් කරන්න.';return}
-  btn.disabled=true;
+  b.disabled=true;
   const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  btn.disabled=false;
+  b.disabled=false;
   if(error){err.textContent='පිවිසීම අසාර්ථකයි: '+error.message;return}
   if(!(await isAdmin(data.user.id))){await sb.auth.signOut();err.textContent='මෙම ගිණුමට පරිපාලක අවසරය නැත.';return}
-  $('aPass').value='';checkAdmin();
+  $('pw').value='';checkAdmin();
 }
-async function logout(){await sb.auth.signOut();stopRefresh();showPanel(false)}
-sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'){stopRefresh();showPanel(false)}});
-['aEmail','aPass'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')login()}));
+async function logout(){await sb.auth.signOut();stopT();show(false)}
+sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'){stopT();show(false)}});
+['em','pw'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')login()}));
 
 function atab(t){
-  $('atR').classList.toggle('active',t==='results');$('atC').classList.toggle('active',t==='create');
-  $('adminResults').style.display=t==='results'?'block':'none';$('adminCreate').style.display=t==='create'?'block':'none';
-  if(t==='results'){loadResults();startRefresh()}else{stopRefresh();initBuilder()}
+  $('t1').classList.toggle('on',t==='r');$('t2').classList.toggle('on',t==='c');
+  $('res').style.display=t==='r'?'block':'none';$('cre').style.display=t==='c'?'block':'none';
+  stopT();
+  if(t==='r'){loadResults();timer=setInterval(loadResults,30*60*1000)}else initBuilder();
 }
 
-/* ---------- RESULTS ---------- */
+/* ---- results ---- */
 async function fetchVotes(ids){
   let all=[],from=0;
   while(true){
@@ -197,110 +165,86 @@ async function fetchVotes(ids){
   return all;
 }
 async function loadResults(){
-  const el=$('adminResults');el.innerHTML='<p class="muted">පූරණය වෙමින්...</p>';
+  const el=$('res');el.innerHTML='<p class="m">පූරණය වෙමින්...</p>';
   let d,votes;
   try{d=await fetchPoll(false);if(d)votes=await fetchVotes(d.ids)}catch(e){el.innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
-  if(!d){el.innerHTML='<div class="card"><p class="muted">තවම ඡන්ද විමසුමක් සාදා නොමැත.</p></div>';return}
-  const{poll,qs,os}=d,resp=new Set(votes.map(v=>v.voter_token)).size;
-  const rd={pollTitle:poll.title,isActive:poll.is_active,total:resp,at:new Date(),questions:[]};
-  let h=`<div class="toolbar"><button class="sm" id="pdfBtn" onclick="exportPDF()">PDF ලෙස බාගත කරන්න</button><button class="sm" onclick="exportXLSX()">Excel ලෙස බාගත කරන්න</button></div>
-  <div class="card" id="printArea"><div class="poll-title">${esc(poll.title)}</div>
-  <p class="muted">මුළු ප්‍රතිචාර දක්වූවන් ගණන: <strong>${resp}</strong> ${poll.is_active?'· ක්‍රියාත්මකයි':'· අක්‍රියයි'}</p>`;
+  if(!d){el.innerHTML='<div class="card"><p class="m">තවම විමසුමක් සාදා නොමැත.</p></div>';return}
+  const{poll,qs,os}=d,total=new Set(votes.map(v=>v.voter_token)).size;
+  const rd={title:poll.title,active:poll.is_active,total,qs:[]};
+  let h=`<div class="tools"><button class="sm" onclick="window.print()">මුද්‍රණය / PDF</button><button class="sm" onclick="exportXLSX()">Excel බාගත කරන්න</button></div>
+  <div class="card"><h2>${esc(poll.title)}</h2><p class="m">මුළු ප්‍රතිචාර දක්වූවන්: <b>${total}</b> · ${poll.is_active?'ක්‍රියාත්මකයි':'අක්‍රියයි'}</p>`;
   qs.forEach((q,i)=>{
     const qv=votes.filter(v=>v.question_id===q.id),qr=new Set(qv.map(v=>v.voter_token)).size,den=qr||1;
     const opts=os.filter(o=>o.question_id===q.id).map(o=>({...o,c:qv.filter(v=>v.option_id===o.id).length})).sort((a,b)=>b.c-a.c);
-    const r={text:q.question_text,multi:q.allow_multiple,respondents:qr,options:[]};
-    h+=`<div class="qr"><div class="qt" style="margin-bottom:4px">${i+1}. ${esc(q.question_text)} ${q.allow_multiple?'<span class="muted">(බහුවරණ)</span>':''}</div><p class="muted" style="margin:0 0 10px">මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව: ${qr}</p>`;
+    const r={text:q.question_text,n:qr,o:[]};
+    h+=`<div class="q"><b>${i+1}. ${esc(q.question_text)}${q.allow_multiple?' <span class="m">(බහුවරණ)</span>':''}</b><span class="m">පිළිතුරු දුන් සංඛ්‍යාව: ${qr}</span>`;
     opts.forEach(o=>{
-      const fp=Math.round(o.c/den*100),ac=Math.max(den-o.c,0),ap=Math.max(100-fp,0);
-      r.options.push({name:o.option_text,fc:o.c,fp,ac,ap});
-      h+=`<div class="bar"><div class="n"><span>${esc(o.option_text)}</span><span>+${o.c}(${fp}%) &nbsp;-${ac}(${ap}%)</span></div><div class="track"><div class="fill" style="width:${fp}%"></div></div></div>`;
+      const p=Math.round(o.c/den*100),ac=Math.max(den-o.c,0);
+      r.o.push([o.option_text,o.c,p+'%',ac,(100-p)+'%']);
+      h+=`<div class="bar"><div><span>${esc(o.option_text)}</span><span>+${o.c} (${p}%) &nbsp;−${ac} (${100-p}%)</span></div><div class="tr"><i style="width:${p}%"></i></div></div>`;
     });
-    rd.questions.push(r);h+='</div>';
+    rd.qs.push(r);h+='</div>';
   });
-  h+=`</div><div class="danger"><h3>අවදානම් කලාපය</h3><p class="muted" style="margin-bottom:12px">මෙය වත්මන් ඡන්ද විමසුම සහ ලැබී ඇති සියලුම ඡන්ද ස්ථිරවම මකා දමයි.</p><button class="sm red" onclick="resetAll()">සියලු දත්ත මකන්න</button></div>`;
+  h+=`</div><div class="danger"><b style="color:var(--warn)">අවදානම් කලාපය</b><p class="m" style="margin:4px 0 10px">වත්මන් විමසුම සහ සියලුම ඡන්ද ස්ථිරවම මැකේ.</p><button class="sm red" onclick="resetAll()">සියලු දත්ත මකන්න</button></div>`;
   el.innerHTML=h;window._rd=rd;
-}
-const stamp=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`};
-
-async function exportPDF(){
-  const t=$('printArea'),b=$('pdfBtn');if(!t||!window.html2canvas||!window.jspdf){toast('PDF library එක load වී නැත.',true);return}
-  const lbl=b.textContent;b.disabled=true;b.textContent='සකසමින්...';
-  try{
-    const c=await html2canvas(t,{scale:2,backgroundColor:'#FBF9F3'}),img=c.toDataURL('image/png');
-    const doc=new window.jspdf.jsPDF('p','mm','a4'),pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight(),m=10;
-    const w=pw-m*2,h=c.height*w/c.width;let left=h;
-    doc.addImage(img,'PNG',m,m,w,h);left-=ph-m*2;
-    while(left>0){doc.addPage();doc.addImage(img,'PNG',m,left-h+m,w,h);left-=ph-m*2}
-    doc.save(`poll-results-${stamp()}.pdf`);
-  }catch(e){toast('PDF සෑදීමේ දෝෂයක්: '+e.message,true)}
-  finally{b.disabled=false;b.textContent=lbl}
 }
 function exportXLSX(){
   const d=window._rd;if(!d||!window.XLSX){toast('Excel library එක load වී නැත.',true);return}
-  try{
-    const r=[['ඡන්ද විමසුමේ මාතෘකාව',d.pollTitle],['ස්ථිතිය',d.isActive?'ක්‍රියාත්මකයි':'අක්‍රියයි'],['මුළු ප්‍රතිචාර දක්වූවන් ගණන',d.total],['වාර්තාව සකස් කළ දිනය',d.at.toLocaleString('si-LK')],[]];
-    d.questions.forEach((q,i)=>{
-      r.push([`${i+1}. ${q.text}${q.multi?' (බහුවරණ)':''}`],['මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව',q.respondents],['විකල්පය','ඡන්ද ගණන (+)','ප්‍රතිශතය (+)','ඡන්ද ගණන (-)','ප්‍රතිශතය (-)']);
-      q.options.forEach(o=>r.push([o.name,o.fc,o.fp+'%',o.ac,o.ap+'%']));r.push([]);
-    });
-    const ws=XLSX.utils.aoa_to_sheet(r);ws['!cols']=[{wch:38},{wch:16},{wch:14},{wch:16},{wch:14}];
-    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Results');XLSX.writeFile(wb,`poll-results-${stamp()}.xlsx`);
-  }catch(e){toast('Excel සෑදීමේ දෝෂයක්: '+e.message,true)}
+  const r=[['මාතෘකාව',d.title],['ස්ථිතිය',d.active?'ක්‍රියාත්මකයි':'අක්‍රියයි'],['මුළු ප්‍රතිචාර දක්වූවන්',d.total],[]];
+  d.qs.forEach((q,i)=>{r.push([`${i+1}. ${q.text}`],['විකල්පය','ඡන්ද (+)','% (+)','ඡන්ද (−)','% (−)'],...q.o,[])});
+  const ws=XLSX.utils.aoa_to_sheet(r);ws['!cols']=[{wch:40},{wch:12},{wch:10},{wch:12},{wch:10}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Results');XLSX.writeFile(wb,'poll-results.xlsx');
 }
 async function wipe(){
   const{data}=await sb.from('polls').select('id');
   if(data&&data.length){const{error}=await sb.from('polls').delete().in('id',data.map(p=>p.id));if(error)throw error}
 }
 async function resetAll(){
-  if(!confirm('සියලුම ඡන්ද විමසුම් සහ ඡන්ද ස්ථිරවම මකා දමන්නද?'))return;
+  if(!confirm('සියලුම විමසුම් සහ ඡන්ද ස්ථිරවම මකා දමන්නද?'))return;
   try{await wipe();toast('සියලු දත්ත මකා දමන ලදී.');loadResults()}catch(e){toast('දෝෂයක්: '+e.message,true)}
 }
 
-/* ---------- CREATE POLL ---------- */
-let bq=[],qc=0,draft='';
+/* ---- create poll ---- */
+let bq=[],kc=0,draft='';
+const gq=k=>bq.find(q=>q.k===k);
 function initBuilder(){if(!bq.length)addQ();else draw()}
-function addQ(){qc++;bq.push({key:qc,text:'',multi:false,options:[{key:1,text:''},{key:2,text:''}]});draw()}
-const gq=k=>bq.find(q=>q.key===k);
-function delQ(k){bq=bq.filter(q=>q.key!==k);draw()}
-function addO(k){const q=gq(k);q.options.push({key:Math.max(0,...q.options.map(o=>o.key))+1,text:''});draw()}
-function delO(k,o){const q=gq(k);if(q.options.length>2){q.options=q.options.filter(x=>x.key!==o);draw()}}
+function addQ(){kc++;bq.push({k:kc,text:'',multi:false,o:[{k:1,text:''},{k:2,text:''}]});draw()}
+function delQ(k){bq=bq.filter(q=>q.k!==k);draw()}
+function addO(k){const q=gq(k);q.o.push({k:Math.max(0,...q.o.map(o=>o.k))+1,text:''});draw()}
+function delO(k,o){const q=gq(k);if(q.o.length>2){q.o=q.o.filter(x=>x.k!==o);draw()}}
 function draw(){
-  $('adminCreate').innerHTML=`<div class="card"><div class="poll-title" style="font-size:1.15rem">නව ඡන්ද විමසුමක් සාදන්න</div>
-  <p class="muted" style="margin-bottom:18px">සුරැකීමේදී වත්මන් විමසුම සහ එහි ඡන්ද සියල්ල ස්ථිරවම මකා දමා, මෙය ක්‍රියාත්මක විමසුම බවට පත් වේ.</p>
-  <div class="field"><label>විමසුමේ මාතෘකාව</label><input type="text" id="pt" placeholder="උදා: 2026 වාර්ෂික සමීක්ෂණය"></div>
-  <div id="qbs"></div><button class="sm" onclick="addQ()">+ ප්‍රශ්නයක් එකතු කරන්න</button>
-  <div style="margin-top:24px"><button class="btn" id="pub" onclick="publish()">පැරණි දත්ත මකා නව විමසුම ප්‍රකාශයට පත් කරන්න</button></div><div id="pErr" class="err"></div></div>`;
+  $('cre').innerHTML=`<div class="card"><h2>නව විමසුමක් සාදන්න</h2>
+  <p class="m" style="margin-bottom:14px">ප්‍රකාශයට පත් කිරීමේදී පැරණි විමසුම සහ එහි ඡන්ද ස්ථිරවම මැකේ.</p>
+  <label class="m">විමසුමේ මාතෘකාව</label><input type="text" id="pt" placeholder="උදා: 2026 වාර්ෂික සමීක්ෂණය">
+  <div id="qbs"></div><button class="sm" onclick="addQ()">+ ප්‍රශ්නයක්</button>
+  <div style="margin-top:20px"><button class="btn" id="pub" onclick="publish()">පැරණි දත්ත මකා ප්‍රකාශයට පත් කරන්න</button></div><div id="pe" class="err"></div></div>`;
   const t=$('pt');t.value=draft;t.oninput=e=>draft=e.target.value;
-  $('qbs').innerHTML=bq.map((q,i)=>`<div class="qbox"><div class="top"><div class="field" style="flex:1"><label>ප්‍රශ්නය ${i+1}</label>
-  <input type="text" value="${escA(q.text)}" placeholder="ප්‍රශ්නය ටයිප් කරන්න" oninput="gq(${q.key}).text=this.value"></div>
-  ${bq.length>1?`<button class="x" onclick="delQ(${q.key})">✕</button>`:''}</div>
-  <div style="margin:12px 0 8px">${q.options.map(o=>`<div class="orow"><input type="text" value="${escA(o.text)}" placeholder="විකල්පය" oninput="gq(${q.key}).options.find(x=>x.key==${o.key}).text=this.value">${q.options.length>2?`<button class="x" onclick="delO(${q.key},${o.key})">✕</button>`:''}</div>`).join('')}</div>
-  <button class="sm" onclick="addO(${q.key})">+ විකල්පයක් එකතු කරන්න</button>
-  <label class="multi"><input type="checkbox" ${q.multi?'checked':''} onchange="gq(${q.key}).multi=this.checked"> බහුවරණ තේරීමට අවසර දෙන්න (checkbox)</label></div>`).join('');
+  $('qbs').innerHTML=bq.map((q,i)=>`<div class="box"><div class="row"><input type="text" value="${escA(q.text)}" placeholder="ප්‍රශ්නය ${i+1}" oninput="gq(${q.k}).text=this.value">${bq.length>1?`<button class="x" onclick="delQ(${q.k})">✕</button>`:''}</div>
+  ${q.o.map(o=>`<div class="row"><input type="text" value="${escA(o.text)}" placeholder="විකල්පය" oninput="gq(${q.k}).o.find(x=>x.k==${o.k}).text=this.value">${q.o.length>2?`<button class="x" onclick="delO(${q.k},${o.k})">✕</button>`:''}</div>`).join('')}
+  <button class="sm" onclick="addO(${q.k})">+ විකල්පයක්</button>
+  <label class="row m" style="margin-top:10px"><input type="checkbox" ${q.multi?'checked':''} onchange="gq(${q.k}).multi=this.checked"> බහුවරණ තේරීමට අවසර දෙන්න</label></div>`).join('');
 }
 async function publish(){
-  const err=$('pErr');err.textContent='';const title=draft.trim();
+  const err=$('pe');err.textContent='';const title=draft.trim();
   if(!title){err.textContent='විමසුමේ මාතෘකාව අවශ්‍යයි.';return}
   for(const q of bq){
     if(!q.text.trim()){err.textContent='සියලුම ප්‍රශ්නවලට පෙළ අවශ්‍යයි.';return}
-    if(q.options.some(o=>!o.text.trim())){err.textContent='සියලුම විකල්පවලට පෙළ අවශ්‍යයි.';return}
+    if(q.o.some(o=>!o.text.trim())){err.textContent='සියලුම විකල්පවලට පෙළ අවශ්‍යයි.';return}
   }
-  if(!confirm('පැරණි ඡන්ද විමසුම සහ එහි සියලුම ඡන්ද ස්ථිරවම මකා, මෙම නව විමසුම ප්‍රකාශයට පත් කරන්නද?'))return;
-  const btn=$('pub'),lbl=btn.textContent;btn.disabled=true;btn.textContent='සකසමින්...';
+  if(!confirm('පැරණි විමසුම සහ ඡන්ද ස්ථිරවම මකා, නව විමසුම ප්‍රකාශයට පත් කරන්නද?'))return;
+  const b=$('pub'),l=b.textContent;b.disabled=true;b.textContent='සකසමින්...';
   try{
     await wipe();
     const{data:p,error:pe}=await sb.from('polls').insert({title,is_active:true}).select().single();if(pe)throw pe;
     for(let i=0;i<bq.length;i++){
       const q=bq[i];
       const{data:nq,error:qe}=await sb.from('questions').insert({poll_id:p.id,question_text:q.text.trim(),allow_multiple:q.multi,position:i}).select().single();if(qe)throw qe;
-      const{error:oe}=await sb.from('options').insert(q.options.map((o,j)=>({question_id:nq.id,option_text:o.text.trim(),position:j})));if(oe)throw oe;
+      const{error:oe}=await sb.from('options').insert(q.o.map((o,j)=>({question_id:nq.id,option_text:o.text.trim(),position:j})));if(oe)throw oe;
     }
-    bq=[];draft='';toast('නව ඡන්ද විමසුම ප්‍රකාශයට පත් කරන ලදී.');atab('results');
+    bq=[];draft='';toast('නව විමසුම ප්‍රකාශයට පත් කරන ලදී.');atab('r');
   }catch(e){err.textContent='දෝෂයක්: '+e.message}
-  finally{btn.disabled=false;btn.textContent=lbl}
+  finally{b.disabled=false;b.textContent=l}
 }
-
 loadVote();
 </script>
 </body>
