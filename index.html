@@ -4,929 +4,304 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ඡන්ද මධ්‍යස්ථානය — Poll</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://unpkg.com/[email protected]/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root{
-    --ink:#1B2A4A;
-    --ink-soft:#3C4A6B;
-    --paper:#EDE6D6;
-    --paper-dark:#E1D8C2;
-    --stamp:#AA3327;
-    --gold:#B0872C;
-    --line:#C9BD9F;
-    --white:#FBF9F3;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'IBM Plex Sans', sans-serif;
-    min-height:100vh;
-    background-image:
-      linear-gradient(var(--paper) 0%, var(--paper) 100%);
-  }
-  ::selection{background:var(--gold); color:var(--white);}
-
-  header{
-    border-bottom:2px solid var(--ink);
-    padding:28px 24px 20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-end;
-    flex-wrap:wrap;
-    gap:12px;
-    max-width:760px;
-    margin:0 auto;
-  }
-  .brand h1{
-    font-family:'Spectral', serif;
-    font-weight:700;
-    font-size:1.7rem;
-    margin:0;
-    letter-spacing:0.01em;
-  }
-  .brand p{
-    margin:4px 0 0;
-    font-size:0.85rem;
-    color:var(--ink-soft);
-  }
-  nav.tabs{display:flex; gap:18px;}
-  nav.tabs button{
-    background:none;
-    border:none;
-    font-family:'IBM Plex Sans', sans-serif;
-    font-size:0.95rem;
-    color:var(--ink-soft);
-    cursor:pointer;
-    padding:4px 0;
-    border-bottom:2px solid transparent;
-  }
-  nav.tabs button.active{
-    color:var(--ink);
-    border-bottom-color:var(--stamp);
-    font-weight:600;
-  }
-
-  main{
-    max-width:760px;
-    margin:0 auto;
-    padding:36px 24px 80px;
-  }
-  .view{display:none;}
-  .view.active{display:block;}
-
-  .card{
-    background:var(--white);
-    border:1px solid var(--line);
-    padding:28px 26px;
-    margin-bottom:22px;
-    position:relative;
-  }
-  .poll-title{
-    font-family:'Spectral', serif;
-    font-size:1.5rem;
-    font-weight:600;
-    margin:0 0 6px;
-  }
-  .poll-sub{
-    color:var(--ink-soft);
-    font-size:0.88rem;
-    margin:0 0 24px;
-  }
-
-  .question-block{
-    border-top:1px dashed var(--line);
-    padding:20px 0;
-  }
-  .question-block:first-of-type{border-top:none;}
-  .q-head{
-    display:flex;
-    gap:10px;
-    align-items:baseline;
-    margin-bottom:12px;
-  }
-  .q-number{
-    font-family:'Spectral', serif;
-    font-weight:700;
-    color:var(--stamp);
-    font-size:1.1rem;
-  }
-  .q-text{
-    font-weight:600;
-    font-size:1.05rem;
-    line-height:1.4;
-  }
-  .q-hint{
-    font-size:0.78rem;
-    color:var(--ink-soft);
-    margin:2px 0 12px 26px;
-  }
-  .options{display:flex; flex-direction:column; gap:8px; margin-left:26px;}
-  .opt-label{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:10px 14px;
-    border:1px solid var(--line);
-    cursor:pointer;
-    background:var(--paper);
-    transition:background 0.12s;
-  }
-  .opt-label:hover{background:var(--paper-dark);}
-  .opt-label input{accent-color:var(--stamp); width:16px; height:16px;}
-  .opt-label span{font-size:0.95rem;}
-
-  .cast-btn{
-    margin-top:26px;
-    background:var(--ink);
-    color:var(--white);
-    border:none;
-    padding:13px 26px;
-    font-size:0.95rem;
-    font-family:'IBM Plex Sans', sans-serif;
-    font-weight:500;
-    cursor:pointer;
-    letter-spacing:0.02em;
-  }
-  .cast-btn:hover{background:var(--stamp);}
-  .cast-btn:disabled{background:#999; cursor:not-allowed;}
-
-  .stamp-msg{
-    text-align:center;
-    padding:50px 20px;
-  }
-  .stamp-circle{
-    width:96px; height:96px;
-    border:3px solid var(--stamp);
-    border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    margin:0 auto 18px;
-    transform:rotate(-8deg);
-    color:var(--stamp);
-    font-family:'Spectral', serif;
-    font-weight:700;
-    font-size:0.85rem;
-    text-align:center;
-    line-height:1.2;
-  }
-  .stamp-msg p{color:var(--ink-soft); font-size:0.92rem;}
-
-  .empty-state{
-    text-align:center;
-    padding:60px 20px;
-    color:var(--ink-soft);
-  }
-  .empty-state h2{
-    font-family:'Spectral', serif;
-    color:var(--ink);
-  }
-
-  /* Admin */
-  .login-box{max-width:340px; margin:60px auto;}
-  .login-box input{
-    width:100%;
-    padding:11px 13px;
-    border:1px solid var(--line);
-    background:var(--white);
-    font-family:'IBM Plex Sans', sans-serif;
-    font-size:0.95rem;
-    margin-bottom:12px;
-  }
-  .login-box button{
-    width:100%;
-    background:var(--ink);
-    color:var(--white);
-    border:none;
-    padding:11px;
-    cursor:pointer;
-    font-size:0.95rem;
-  }
-  .err-text{color:var(--stamp); font-size:0.85rem; margin-top:4px;}
-
-  .admin-tabs{display:flex; gap:0; border-bottom:1px solid var(--line); margin-bottom:24px;}
-  .admin-tabs button{
-    background:none; border:none; padding:10px 18px;
-    font-size:0.9rem; cursor:pointer; color:var(--ink-soft);
-    border-bottom:2px solid transparent;
-  }
-  .admin-tabs button.active{color:var(--ink); border-bottom-color:var(--stamp); font-weight:600;}
-
-  .section-label{
-    font-family:'Spectral', serif;
-    font-size:1.15rem;
-    font-weight:600;
-    margin:0 0 4px;
-  }
-  .muted{color:var(--ink-soft); font-size:0.85rem;}
-
-  .bar-row{margin-bottom:14px;}
-  .bar-row .opt-name{font-size:0.9rem; margin-bottom:4px; display:flex; justify-content:space-between;}
-  .bar-track{background:var(--paper-dark); height:10px; width:100%;}
-  .bar-fill{background:var(--stamp); height:10px;}
-
-  .q-report{border-top:1px dashed var(--line); padding:18px 0;}
-  .q-report:first-of-type{border-top:none;}
-
-  .field{margin-bottom:14px;}
-  .field label{display:block; font-size:0.82rem; color:var(--ink-soft); margin-bottom:5px;}
-  .field input[type=text]{
-    width:100%; padding:10px 12px; border:1px solid var(--line);
-    font-family:'IBM Plex Sans', sans-serif; font-size:0.95rem; background:var(--white);
-  }
-  .qb-block{border:1px solid var(--line); padding:18px; margin-bottom:16px; background:var(--paper);}
-  .qb-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
-  .qb-opts{margin:12px 0 8px;}
-  .qb-opt-row{display:flex; gap:8px; margin-bottom:8px;}
-  .qb-opt-row input{flex:1; padding:8px 10px; border:1px solid var(--line);}
-  .small-btn{
-    background:none; border:1px solid var(--ink-soft); color:var(--ink-soft);
-    padding:6px 12px; font-size:0.8rem; cursor:pointer;
-  }
-  .small-btn:hover{border-color:var(--ink); color:var(--ink);}
-  .danger-btn{border-color:var(--stamp); color:var(--stamp);}
-  .danger-btn:hover{background:var(--stamp); color:var(--white);}
-  .remove-x{
-    background:none; border:none; color:var(--stamp); cursor:pointer; font-size:1.1rem; line-height:1;
-  }
-  .allow-multi{display:flex; align-items:center; gap:8px; margin-top:10px; font-size:0.85rem;}
-
-  .primary-btn{
-    background:var(--ink); color:var(--white); border:none;
-    padding:12px 22px; cursor:pointer; font-size:0.92rem;
-  }
-  .primary-btn:hover{background:var(--stamp);}
-  .primary-btn:disabled{background:#999; cursor:not-allowed;}
-
-  .danger-zone{border:1px solid var(--stamp); padding:18px; margin-top:30px;}
-  .danger-zone h3{margin:0 0 6px; font-size:0.95rem; color:var(--stamp);}
-
-  .toast{
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-    background:var(--ink); color:var(--white); padding:12px 20px;
-    font-size:0.88rem; display:none; z-index:50;
-  }
-  .toast.show{display:block;}
-  .logout-link{background:none; border:none; color:var(--ink-soft); font-size:0.82rem; cursor:pointer; text-decoration:underline;}
-  .report-toolbar{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+:root{--ink:#1B2A4A;--soft:#3C4A6B;--paper:#EDE6D6;--dark:#E1D8C2;--stamp:#AA3327;--line:#C9BD9F;--white:#FBF9F3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 'IBM Plex Sans',sans-serif;min-height:100vh}
+header{border-bottom:2px solid var(--ink);padding:28px 24px 20px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;max-width:760px;margin:0 auto}
+h1{font:700 1.7rem 'Spectral',serif;margin:0}
+.brand p{margin:4px 0 0;font-size:.85rem;color:var(--soft)}
+nav{display:flex;gap:18px}
+nav button{background:none;border:0;font:inherit;color:var(--soft);cursor:pointer;padding:4px 0;border-bottom:2px solid transparent}
+nav button.active{color:var(--ink);border-bottom-color:var(--stamp);font-weight:600}
+main{max-width:760px;margin:0 auto;padding:36px 24px 80px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--white);border:1px solid var(--line);padding:28px 26px;margin-bottom:22px}
+.poll-title{font:600 1.5rem 'Spectral',serif;margin:0 0 6px}
+.muted{color:var(--soft);font-size:.85rem}
+.qb{border-top:1px dashed var(--line);padding:20px 0}
+.qh{display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
+.qn{font:700 1.1rem 'Spectral',serif;color:var(--stamp)}
+.qt{font-weight:600;font-size:1.05rem}
+.hint{font-size:.78rem;color:var(--soft);margin:2px 0 12px 26px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-left:26px}
+.opt{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);cursor:pointer;background:var(--paper)}
+.opt:hover{background:var(--dark)}
+.opt input{accent-color:var(--stamp);width:16px;height:16px}
+.btn{background:var(--ink);color:var(--white);border:0;padding:12px 24px;font:500 .95rem 'IBM Plex Sans',sans-serif;cursor:pointer}
+.btn:hover{background:var(--stamp)}.btn:disabled{background:#999;cursor:not-allowed}
+.sm{background:none;border:1px solid var(--soft);color:var(--soft);padding:6px 12px;font-size:.8rem;cursor:pointer}
+.sm:hover{border-color:var(--ink);color:var(--ink)}
+.sm.red{border-color:var(--stamp);color:var(--stamp)}.sm.red:hover{background:var(--stamp);color:var(--white)}
+.stamp{text-align:center;padding:50px 20px}
+.circle{width:96px;height:96px;border:3px solid var(--stamp);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;transform:rotate(-8deg);color:var(--stamp);font:700 .85rem 'Spectral',serif;line-height:1.2}
+.empty{text-align:center;padding:60px 20px;color:var(--soft)}
+.err{color:var(--stamp);font-size:.85rem;margin-top:6px}
+.login{max-width:340px;margin:60px auto}
+.login input,.field input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);background:var(--white);font:inherit;margin-bottom:12px}
+.login .btn{width:100%}
+.atabs{display:flex;border-bottom:1px solid var(--line)}
+.atabs button{background:none;border:0;padding:10px 18px;cursor:pointer;color:var(--soft);border-bottom:2px solid transparent;font:inherit}
+.atabs button.active{color:var(--ink);border-bottom-color:var(--stamp);font-weight:600}
+.bar{margin-bottom:14px}
+.bar .n{font-size:.9rem;margin-bottom:4px;display:flex;justify-content:space-between;gap:10px}
+.track{background:var(--dark);height:10px}.fill{background:var(--stamp);height:10px}
+.qr{border-top:1px dashed var(--line);padding:18px 0}
+.field label{display:block;font-size:.82rem;color:var(--soft);margin-bottom:5px}
+.qbox{border:1px solid var(--line);padding:18px;margin-bottom:16px;background:var(--paper)}
+.top{display:flex;justify-content:space-between;gap:10px}
+.orow{display:flex;gap:8px;margin-bottom:8px}.orow input{flex:1;padding:8px 10px;border:1px solid var(--line);margin:0}
+.x{background:none;border:0;color:var(--stamp);cursor:pointer;font-size:1.1rem}
+.multi{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.85rem}
+.danger{border:1px solid var(--stamp);padding:18px;margin-top:30px}
+.danger h3{margin:0 0 6px;font-size:.95rem;color:var(--stamp)}
+.toolbar{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);color:var(--white);padding:12px 20px;font-size:.88rem;display:none;z-index:50}
+.toast.show{display:block}
+.link{background:none;border:0;color:var(--soft);font-size:.82rem;cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="brand">
-    <h1>ඡන්ද මධ්‍යස්ථානය</h1>
-    <p>Live poll</p>
-  </div>
-  <nav class="tabs">
-    <button id="tabVoteBtn" class="active" onclick="switchTab('vote')">ඡන්දය දෙන්න</button>
-    <button id="tabAdminBtn" onclick="switchTab('admin')">පරිපාලක</button>
-  </nav>
+<div class="brand"><h1>ඡන්ද මධ්‍යස්ථානය</h1><p>Live poll</p></div>
+<nav><button id="tv" class="active" onclick="tab('vote')">ඡන්දය දෙන්න</button><button id="ta" onclick="tab('admin')">පරිපාලක</button></nav>
 </header>
-
 <main>
-
-  <!-- VOTE VIEW -->
-  <section id="voteView" class="view active">
-    <div id="voteContent">
-      <div class="empty-state"><h2>පූරණය වෙමින්...</h2></div>
-    </div>
-  </section>
-
-  <!-- ADMIN VIEW -->
-  <section id="adminView" class="view">
-
-    <div id="adminLogin" class="login-box card">
-      <p class="section-label">පරිපාලක පිවිසුම</p>
-      <p class="muted" style="margin-bottom:16px;">මෙය පරිශීලක අතුරුමුහුණත් මට්ටමේ රැකවරණයක් පමණි — සත්‍ය ආරක්ෂාව සඳහා Supabase Auth + RLS භාවිතා කරන්න.</p>
-      <input type="password" id="adminPassInput" placeholder="මුරපදය">
-      <button onclick="tryAdminLogin()">පිවිසෙන්න</button>
-      <div id="adminLoginErr" class="err-text"></div>
-    </div>
-
-    <div id="adminPanel" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-        <div class="admin-tabs">
-          <button id="atResults" class="active" onclick="switchAdminTab('results')">ප්‍රතිඵල</button>
-          <button id="atCreate" onclick="switchAdminTab('create')">නව විමසුමක්</button>
-        </div>
-        <button class="logout-link" onclick="adminLogout()">පිටවීම</button>
-      </div>
-
-      <div id="adminResults" class="admin-sub active"></div>
-      <div id="adminCreate" class="admin-sub" style="display:none;"></div>
-    </div>
-
-  </section>
-
+<section id="voteView" class="view active"><div id="voteContent"></div></section>
+<section id="adminView" class="view">
+<div id="adminLogin" class="login card">
+<p class="poll-title" style="font-size:1.15rem">පරිපාලක පිවිසුම</p>
+<p class="muted">ඔබේ email සහ මුරපදය ඇතුළත් කරන්න</p>
+<input type="email" id="aEmail" placeholder="Email" autocomplete="username">
+<input type="password" id="aPass" placeholder="මුරපදය" autocomplete="current-password">
+<button class="btn" id="aBtn" onclick="login()">පිවිසෙන්න</button>
+<div id="aErr" class="err"></div>
+</div>
+<div id="adminPanel" style="display:none">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+<div class="atabs"><button id="atR" class="active" onclick="atab('results')">ප්‍රතිඵල</button><button id="atC" onclick="atab('create')">නව විමසුමක්</button></div>
+<button class="link" onclick="logout()">පිටවීම</button>
+</div>
+<div id="adminResults"></div><div id="adminCreate" style="display:none"></div>
+</div>
+</section>
 </main>
-
 <div id="toast" class="toast"></div>
 
 <script>
-/* =========================================================
-   CONFIG — මෙය ඔබේ Supabase project විස්තර වලින් පුරවන්න
-   ========================================================= */
-const SUPABASE_URL = "https://jcijglwpkfluyzrltimk.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaWpnbHdwa2ZsdXl6cmx0aW1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MzU3OTUsImV4cCI6MjA4MjQxMTc5NX0.dvT8OiyVEiYn_DhkMakmSq1Vvr4REDr0kYPnyqCtWHs";
-const ADMIN_PASSWORD = "kosala81"; // UI-level gate only, see note below
-/* ========================================================= */
+const SUPABASE_URL="https://jcijglwpkfluyzrltimk.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaWpnbHdwa2ZsdXl6cmx0aW1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MzU3OTUsImV4cCI6MjA4MjQxMTc5NX0.dvT8OiyVEiYn_DhkMakmSq1Vvr4REDr0kYPnyqCtWHs";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const $=i=>document.getElementById(i),ZERO='00000000-0000-0000-0000-000000000000';
+const esc=s=>{const d=document.createElement('div');d.textContent=s??'';return d.innerHTML};
+const escA=s=>(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function toast(m,e){const t=$('toast');t.textContent=m;t.style.background=e?'#AA3327':'#1B2A4A';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200)}
+function voterToken(){let t=localStorage.getItem('poll_voter_token');if(!t){t=crypto.randomUUID();localStorage.setItem('poll_voter_token',t)}return t}
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function tab(t){
+  $('voteView').classList.toggle('active',t==='vote');$('adminView').classList.toggle('active',t==='admin');
+  $('tv').classList.toggle('active',t==='vote');$('ta').classList.toggle('active',t==='admin');
+  if(t==='vote'){stopRefresh();loadVote()}else checkAdmin();
+}
+let timer=null;
+const startRefresh=()=>{stopRefresh();timer=setInterval(loadResults,30*60*1000)};
+const stopRefresh=()=>{if(timer){clearInterval(timer);timer=null}};
 
-function showToast(msg, isErr){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = isErr ? '#AA3327' : '#1B2A4A';
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3200);
+async function fetchPoll(activeOnly){
+  let q=sb.from('polls').select('id,title,is_active,created_at').order('created_at',{ascending:false}).limit(1);
+  if(activeOnly)q=q.eq('is_active',true);
+  const{data:p,error}=await q;if(error)throw error;if(!p.length)return null;
+  const poll=p[0];
+  const{data:qs,error:e2}=await sb.from('questions').select('id,question_text,allow_multiple,position').eq('poll_id',poll.id).order('position');if(e2)throw e2;
+  const ids=qs.length?qs.map(x=>x.id):[ZERO];
+  const{data:os,error:e3}=await sb.from('options').select('id,question_id,option_text,position').in('question_id',ids).order('position');if(e3)throw e3;
+  return{poll,qs,os,ids};
 }
 
-function getVoterToken(){
-  let t = localStorage.getItem('poll_voter_token');
-  if(!t){
-    t = crypto.randomUUID();
-    localStorage.setItem('poll_voter_token', t);
+/* ---------- VOTE ---------- */
+async function loadVote(){
+  const el=$('voteContent');el.innerHTML='<div class="empty"><h2>පූරණය වෙමින්...</h2></div>';
+  let d;try{d=await fetchPoll(true)}catch(e){el.innerHTML=`<div class="empty"><h2>දෝෂයක්</h2><p>${esc(e.message)}</p></div>`;return}
+  if(!d){el.innerHTML='<div class="empty"><h2>දැනට ක්‍රියාත්මක ඡන්ද විමසුමක් නැත</h2><p>පරිපාලකවරයා නව විමසුමක් ප්‍රකාශයට පත් කරන තෙක් රැඳී සිටින්න.</p></div>';return}
+  const{poll,qs,os}=d;
+  if(localStorage.getItem('voted_'+poll.id)==='true'){
+    el.innerHTML=`<div class="card stamp"><div class="circle">ඡන්දය<br>සටහන් විය</div><p class="muted">ඔබ දැනටමත් "${esc(poll.title)}" සඳහා ඡන්දය ලබා දී ඇත. ස්තුතියි!</p></div>`;return;
   }
-  return t;
+  let h=`<form class="card" id="ballot"><div class="poll-title">${esc(poll.title)}</div><p class="muted" style="margin-bottom:20px">ඔබේ තේරීම් සලකුණු කර පහළින් ඉදිරිපත් කරන්න.</p>`;
+  qs.forEach((q,i)=>{
+    const t=q.allow_multiple?'checkbox':'radio';
+    h+=`<div class="qb"><div class="qh"><span class="qn">${i+1}.</span><span class="qt">${esc(q.question_text)}</span></div><div class="hint">${q.allow_multiple?'එකකට වඩා තෝරාගත හැක':'එකක් පමණක් තෝරන්න'}</div><div class="opts">`;
+    os.filter(o=>o.question_id===q.id).forEach(o=>{h+=`<label class="opt"><input type="${t}" name="q_${q.id}" value="${o.id}"><span>${esc(o.option_text)}</span></label>`});
+    h+='</div></div>';
+  });
+  h+='<button type="submit" class="btn" id="cast" style="margin-top:20px">ඡන්දය සටහන් කරන්න</button><div id="vErr" class="err"></div></form>';
+  el.innerHTML=h;
+  $('ballot').addEventListener('submit',e=>{e.preventDefault();submit(poll,qs)});
+}
+async function submit(poll,qs){
+  const err=$('vErr'),btn=$('cast');err.textContent='';const rows=[];
+  for(const q of qs){
+    const c=document.querySelectorAll(`input[name="q_${q.id}"]:checked`);
+    if(!c.length){err.textContent='කරුණාකර සියලුම ප්‍රශ්නවලට පිළිතුරු දෙන්න.';return}
+    c.forEach(x=>rows.push({question_id:q.id,option_id:x.value,voter_token:voterToken()}));
+  }
+  btn.disabled=true;btn.textContent='ඉදිරිපත් කරමින්...';
+  const{error}=await sb.from('votes').insert(rows);
+  if(error){err.textContent='දෝෂයක්: '+error.message;btn.disabled=false;btn.textContent='ඡන්දය සටහන් කරන්න';return}
+  localStorage.setItem('voted_'+poll.id,'true');loadVote();toast('ඔබේ ඡන්දය සටහන් විය. ස්තුතියි!');
 }
 
-/* ---------- TAB SWITCHING ---------- */
-function switchTab(tab){
-  document.getElementById('voteView').classList.toggle('active', tab==='vote');
-  document.getElementById('adminView').classList.toggle('active', tab==='admin');
-  document.getElementById('tabVoteBtn').classList.toggle('active', tab==='vote');
-  document.getElementById('tabAdminBtn').classList.toggle('active', tab==='admin');
-  if(tab==='vote'){ stopResultsAutoRefresh(); loadVoteView(); }
-  if(tab==='admin') checkAdminSession();
+/* ---------- ADMIN AUTH (Supabase Authentication) ---------- */
+function showPanel(on){$('adminLogin').style.display=on?'none':'block';$('adminPanel').style.display=on?'block':'none'}
+async function isAdmin(uid){
+  const{data,error}=await sb.from('admins').select('user_id').eq('user_id',uid).maybeSingle();
+  return !error&&!!data;
+}
+async function checkAdmin(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session&&await isAdmin(session.user.id)){showPanel(true);atab('results')}
+  else{stopRefresh();showPanel(false)}
+}
+async function login(){
+  const email=$('aEmail').value.trim(),pass=$('aPass').value,err=$('aErr'),btn=$('aBtn');err.textContent='';
+  if(!email||!pass){err.textContent='Email සහ මුරපදය දෙකම ඇතුළත් කරන්න.';return}
+  btn.disabled=true;
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;
+  if(error){err.textContent='පිවිසීම අසාර්ථකයි: '+error.message;return}
+  if(!(await isAdmin(data.user.id))){await sb.auth.signOut();err.textContent='මෙම ගිණුමට පරිපාලක අවසරය නැත.';return}
+  $('aPass').value='';checkAdmin();
+}
+async function logout(){await sb.auth.signOut();stopRefresh();showPanel(false)}
+sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'){stopRefresh();showPanel(false)}});
+['aEmail','aPass'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')login()}));
+
+function atab(t){
+  $('atR').classList.toggle('active',t==='results');$('atC').classList.toggle('active',t==='create');
+  $('adminResults').style.display=t==='results'?'block':'none';$('adminCreate').style.display=t==='create'?'block':'none';
+  if(t==='results'){loadResults();startRefresh()}else{stopRefresh();initBuilder()}
 }
 
-/* ---------- RESULTS AUTO-REFRESH (every 30 minutes) ---------- */
-const RESULTS_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
-let resultsAutoRefreshTimer = null;
-
-function startResultsAutoRefresh(){
-  stopResultsAutoRefresh();
-  resultsAutoRefreshTimer = setInterval(loadAdminResults, RESULTS_REFRESH_MS);
+/* ---------- RESULTS ---------- */
+async function fetchVotes(ids){
+  let all=[],from=0;
+  while(true){
+    const{data,error}=await sb.from('votes').select('id,question_id,option_id,voter_token').in('question_id',ids).range(from,from+999);
+    if(error)throw error;all=all.concat(data);if(data.length<1000)break;from+=1000;
+  }
+  return all;
 }
-
-function stopResultsAutoRefresh(){
-  if(resultsAutoRefreshTimer){
-    clearInterval(resultsAutoRefreshTimer);
-    resultsAutoRefreshTimer = null;
-  }
-}
-
-/* ============================================================
-   VOTE VIEW
-   ============================================================ */
-async function loadVoteView(){
-  const el = document.getElementById('voteContent');
-  el.innerHTML = `<div class="empty-state"><h2>පූරණය වෙමින්...</h2></div>`;
-
-  const { data: polls, error } = await sb
-    .from('polls')
-    .select('id,title,is_active,created_at')
-    .eq('is_active', true)
-    .order('created_at', {ascending:false})
-    .limit(1);
-
-  if(error){
-    el.innerHTML = `<div class="empty-state"><h2>දෝෂයක්</h2><p>${escapeHtml(error.message)}</p></div>`;
-    return;
-  }
-  if(!polls || polls.length===0){
-    el.innerHTML = `<div class="empty-state"><h2>දැනට ක්‍රියාත්මක ඡන්ද විමසුමක් නැත</h2><p>පරිපාලකවරයා නව විමසුමක් ප්‍රකාශයට පත් කරන තෙක් රැඳී සිටින්න.</p></div>`;
-    return;
-  }
-  const poll = polls[0];
-
-  const alreadyVoted = localStorage.getItem('voted_' + poll.id) === 'true';
-
-  const { data: questions, error: qErr } = await sb
-    .from('questions')
-    .select('id,question_text,allow_multiple,position')
-    .eq('poll_id', poll.id)
-    .order('position', {ascending:true});
-
-  if(qErr){
-    el.innerHTML = `<div class="empty-state"><h2>දෝෂයක්</h2><p>${escapeHtml(qErr.message)}</p></div>`;
-    return;
-  }
-
-  const qIds = questions.map(q=>q.id);
-  const { data: options, error: oErr } = await sb
-    .from('options')
-    .select('id,question_id,option_text,position')
-    .in('question_id', qIds.length ? qIds : ['00000000-0000-0000-0000-000000000000'])
-    .order('position', {ascending:true});
-
-  if(oErr){
-    el.innerHTML = `<div class="empty-state"><h2>දෝෂයක්</h2><p>${escapeHtml(oErr.message)}</p></div>`;
-    return;
-  }
-
-  if(alreadyVoted){
-    el.innerHTML = `
-      <div class="card stamp-msg">
-        <div class="stamp-circle">ඡන්දය<br>සටහන් විය</div>
-        <p>ඔබ දැනටමත් "${escapeHtml(poll.title)}" සඳහා ඡන්දය ලබා දී ඇත. ස්තුතියි!</p>
-      </div>`;
-    return;
-  }
-
-  let html = `<form class="card" id="ballotForm">
-    <div class="poll-title">${escapeHtml(poll.title)}</div>
-    <div class="poll-sub">ඔබේ තේරීම් සලකුණු කර පහළින් ඉදිරිපත් කරන්න.</div>`;
-
-  questions.forEach((q, idx)=>{
-    const opts = options.filter(o=>o.question_id === q.id);
-    const inputType = q.allow_multiple ? 'checkbox' : 'radio';
-    html += `<div class="question-block">
-      <div class="q-head">
-        <span class="q-number">${idx+1}.</span>
-        <span class="q-text">${escapeHtml(q.question_text)}</span>
-      </div>
-      <div class="q-hint">${q.allow_multiple ? 'එකකට වඩා තෝරාගත හැක' : 'එකක් පමණක් තෝරන්න'}</div>
-      <div class="options">`;
+async function loadResults(){
+  const el=$('adminResults');el.innerHTML='<p class="muted">පූරණය වෙමින්...</p>';
+  let d,votes;
+  try{d=await fetchPoll(false);if(d)votes=await fetchVotes(d.ids)}catch(e){el.innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
+  if(!d){el.innerHTML='<div class="card"><p class="muted">තවම ඡන්ද විමසුමක් සාදා නොමැත.</p></div>';return}
+  const{poll,qs,os}=d,resp=new Set(votes.map(v=>v.voter_token)).size;
+  const rd={pollTitle:poll.title,isActive:poll.is_active,total:resp,at:new Date(),questions:[]};
+  let h=`<div class="toolbar"><button class="sm" id="pdfBtn" onclick="exportPDF()">PDF ලෙස බාගත කරන්න</button><button class="sm" onclick="exportXLSX()">Excel ලෙස බාගත කරන්න</button></div>
+  <div class="card" id="printArea"><div class="poll-title">${esc(poll.title)}</div>
+  <p class="muted">මුළු ප්‍රතිචාර දක්වූවන් ගණන: <strong>${resp}</strong> ${poll.is_active?'· ක්‍රියාත්මකයි':'· අක්‍රියයි'}</p>`;
+  qs.forEach((q,i)=>{
+    const qv=votes.filter(v=>v.question_id===q.id),qr=new Set(qv.map(v=>v.voter_token)).size,den=qr||1;
+    const opts=os.filter(o=>o.question_id===q.id).map(o=>({...o,c:qv.filter(v=>v.option_id===o.id).length})).sort((a,b)=>b.c-a.c);
+    const r={text:q.question_text,multi:q.allow_multiple,respondents:qr,options:[]};
+    h+=`<div class="qr"><div class="qt" style="margin-bottom:4px">${i+1}. ${esc(q.question_text)} ${q.allow_multiple?'<span class="muted">(බහුවරණ)</span>':''}</div><p class="muted" style="margin:0 0 10px">මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව: ${qr}</p>`;
     opts.forEach(o=>{
-      html += `<label class="opt-label">
-        <input type="${inputType}" name="q_${q.id}" value="${o.id}">
-        <span>${escapeHtml(o.option_text)}</span>
-      </label>`;
+      const fp=Math.round(o.c/den*100),ac=Math.max(den-o.c,0),ap=Math.max(100-fp,0);
+      r.options.push({name:o.option_text,fc:o.c,fp,ac,ap});
+      h+=`<div class="bar"><div class="n"><span>${esc(o.option_text)}</span><span>+${o.c}(${fp}%) &nbsp;-${ac}(${ap}%)</span></div><div class="track"><div class="fill" style="width:${fp}%"></div></div></div>`;
     });
-    html += `</div></div>`;
+    rd.questions.push(r);h+='</div>';
   });
-
-  html += `<button type="submit" class="cast-btn" id="castBtn">ඡන්දය සටහන් කරන්න</button>
-    <div id="voteErr" class="err-text"></div>
-  </form>`;
-
-  el.innerHTML = html;
-
-  document.getElementById('ballotForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    await submitBallot(poll, questions);
-  });
+  h+=`</div><div class="danger"><h3>අවදානම් කලාපය</h3><p class="muted" style="margin-bottom:12px">මෙය වත්මන් ඡන්ද විමසුම සහ ලැබී ඇති සියලුම ඡන්ද ස්ථිරවම මකා දමයි.</p><button class="sm red" onclick="resetAll()">සියලු දත්ත මකන්න</button></div>`;
+  el.innerHTML=h;window._rd=rd;
 }
+const stamp=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`};
 
-async function submitBallot(poll, questions){
-  const btn = document.getElementById('castBtn');
-  const errEl = document.getElementById('voteErr');
-  errEl.textContent = '';
-
-  const rows = [];
-  for(const q of questions){
-    const checked = document.querySelectorAll(`input[name="q_${q.id}"]:checked`);
-    if(checked.length === 0){
-      errEl.textContent = 'කරුණාකර සියලුම ප්‍රශ්නවලට පිළිතුරු දෙන්න.';
-      return;
-    }
-    checked.forEach(c=>{
-      rows.push({ question_id: q.id, option_id: c.value, voter_token: getVoterToken() });
-    });
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'ඉදිරිපත් කරමින්...';
-
-  const { error } = await sb.from('votes').insert(rows);
-
-  if(error){
-    errEl.textContent = 'දෝෂයක්: ' + error.message;
-    btn.disabled = false;
-    btn.textContent = 'ඡන්දය සටහන් කරන්න';
-    return;
-  }
-
-  localStorage.setItem('voted_' + poll.id, 'true');
-  loadVoteView();
-  showToast('ඔබේ ඡන්දය සටහන් විය. ස්තුතියි!');
-}
-
-function escapeHtml(str){
-  const d = document.createElement('div');
-  d.textContent = str ?? '';
-  return d.innerHTML;
-}
-
-/* ============================================================
-   ADMIN — LOGIN
-   ============================================================ */
-function checkAdminSession(){
-  if(sessionStorage.getItem('poll_admin_ok') === 'true'){
-    document.getElementById('adminLogin').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    switchAdminTab('results');
-  } else {
-    stopResultsAutoRefresh();
-    document.getElementById('adminLogin').style.display = 'block';
-    document.getElementById('adminPanel').style.display = 'none';
-  }
-}
-
-function tryAdminLogin(){
-  const val = document.getElementById('adminPassInput').value;
-  const errEl = document.getElementById('adminLoginErr');
-  if(val === ADMIN_PASSWORD){
-    sessionStorage.setItem('poll_admin_ok', 'true');
-    errEl.textContent = '';
-    checkAdminSession();
-  } else {
-    errEl.textContent = 'වැරදි මුරපදයකි.';
-  }
-}
-
-function adminLogout(){
-  sessionStorage.removeItem('poll_admin_ok');
-  stopResultsAutoRefresh();
-  checkAdminSession();
-}
-
-function switchAdminTab(tab){
-  document.getElementById('atResults').classList.toggle('active', tab==='results');
-  document.getElementById('atCreate').classList.toggle('active', tab==='create');
-  document.getElementById('adminResults').style.display = tab==='results' ? 'block':'none';
-  document.getElementById('adminCreate').style.display = tab==='create' ? 'block':'none';
-  if(tab==='results'){ loadAdminResults(); startResultsAutoRefresh(); }
-  if(tab==='create'){ stopResultsAutoRefresh(); renderPollBuilder(); }
-}
-
-/* ============================================================
-   ADMIN — RESULTS / REPORT
-   ============================================================ */
-async function loadAdminResults(){
-  const el = document.getElementById('adminResults');
-  el.innerHTML = `<p class="muted">පූරණය වෙමින්...</p>`;
-
-  const { data: polls, error } = await sb
-    .from('polls')
-    .select('id,title,is_active,created_at')
-    .order('created_at', {ascending:false})
-    .limit(1);
-
-  if(error){ el.innerHTML = `<p class="err-text">${escapeHtml(error.message)}</p>`; return; }
-  if(!polls || polls.length===0){
-    el.innerHTML = `<div class="card"><p class="muted">තවම ඡන්ද විමසුමක් සාදා නොමැත.</p></div>`;
-    return;
-  }
-  const poll = polls[0];
-
-  const { data: questions } = await sb
-    .from('questions').select('id,question_text,allow_multiple,position')
-    .eq('poll_id', poll.id).order('position', {ascending:true});
-
-  const qIds = questions.map(q=>q.id);
-  const { data: options } = await sb
-    .from('options').select('id,question_id,option_text,position')
-    .in('question_id', qIds.length ? qIds : ['00000000-0000-0000-0000-000000000000'])
-    .order('position', {ascending:true});
-
-  const { data: votes, error: vErr } = await sb
-    .from('votes').select('id,question_id,option_id,voter_token')
-    .in('question_id', qIds.length ? qIds : ['00000000-0000-0000-0000-000000000000']);
-
-  if(vErr){ el.innerHTML = `<p class="err-text">${escapeHtml(vErr.message)}</p>`; return; }
-
-  const respondents = new Set((votes||[]).map(v=>v.voter_token)).size;
-
-  const reportData = {
-    pollTitle: poll.title,
-    isActive: poll.is_active,
-    totalRespondents: respondents,
-    generatedAt: new Date(),
-    questions: []
-  };
-
-  let html = `<div class="report-toolbar">
-    <button class="small-btn" id="pdfBtn" onclick="downloadResultsAsPDF()">PDF ලෙස බාගත කරන්න</button>
-    <button class="small-btn" id="xlsxBtn" onclick="downloadResultsAsExcel()">Excel ලෙස බාගත කරන්න</button>
-  </div>
-  <div class="card" id="resultsPrintArea">
-    <div class="poll-title">${escapeHtml(poll.title)}</div>
-    <p class="muted">මුළු ප්‍රතිචාර දක්වූවන් ගණන: <strong>${respondents}</strong> ${poll.is_active ? '· <span style="color:#1B2A4A;">ක්‍රියාත්මකයි</span>' : '· අක්‍රියයි'}</p>`;
-
-  questions.forEach((q, idx)=>{
-    const qVotes = (votes||[]).filter(v=>v.question_id===q.id);
-    // මෙම ප්‍රශ්නයට ඇත්තටම පිළිතුරු දුන් පිරිස (distinct voters) - +/- ප්‍රතිශතයේ හරය
-    const qRespondents = new Set(qVotes.map(v=>v.voter_token)).size;
-    const denom = qRespondents || 1;
-
-    let opts = options.filter(o=>o.question_id===q.id).map(o=>{
-      const count = qVotes.filter(v=>v.option_id===o.id).length;
-      return { ...o, count };
-    });
-    // ප්‍රතිඵල, ලැබුණු ඡන්ද ගණන අනුව අවරෝහණ පිළිවෙළට (වැඩියෙන් අඩුවට)
-    opts.sort((a,b)=> b.count - a.count);
-
-    const questionReport = {
-      text: q.question_text,
-      allowMultiple: q.allow_multiple,
-      respondents: qRespondents,
-      options: []
-    };
-
-    html += `<div class="q-report">
-      <div class="q-text" style="margin-bottom:4px;">${idx+1}. ${escapeHtml(q.question_text)} ${q.allow_multiple ? '<span class="muted">(බහුවරණ)</span>' : ''}</div>
-      <p class="muted" style="margin:0 0 10px;">මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව: ${qRespondents}</p>`;
-
-    opts.forEach(o=>{
-      const forCount = o.count;
-      const forPct = Math.round((forCount/denom)*100);
-      const againstCount = Math.max(denom - forCount, 0);
-      const againstPct = Math.max(100 - forPct, 0);
-      questionReport.options.push({ name: o.option_text, forCount, forPct, againstCount, againstPct });
-      html += `<div class="bar-row">
-        <div class="opt-name"><span>${escapeHtml(o.option_text)}</span><span>+${forCount}(${forPct}%) &nbsp;-${againstCount}(${againstPct}%)</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${forPct}%;"></div></div>
-      </div>`;
-    });
-    reportData.questions.push(questionReport);
-    html += `</div>`;
-  });
-
-  html += `</div>
-
-  <div class="danger-zone">
-    <h3>අවදානම් කලාපය</h3>
-    <p class="muted" style="margin-bottom:12px;">මෙය වත්මන් ඡන්ද විමසුම සහ ලැබී ඇති සියලුම ඡන්ද ස්ථිරවම මකා දමයි. නව විමසුමක් සෑදීමේදී මෙය ස්වයංක්‍රීයවම සිදු වේ.</p>
-    <button class="small-btn danger-btn" onclick="resetPollData(true)">සියලු දත්ත මකන්න</button>
-  </div>`;
-
-  el.innerHTML = html;
-  window._reportData = reportData;
-}
-
-function fileDateStamp(){
-  const d = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
-}
-
-/* PDF export: captures the rendered report area as an image so Sinhala text
-   renders exactly as shown on screen (client-side PDF libraries don't shape
-   Sinhala glyphs correctly as native text). */
-async function downloadResultsAsPDF(){
-  const target = document.getElementById('resultsPrintArea');
-  const btn = document.getElementById('pdfBtn');
-  if(!target || !window.html2canvas || !window.jspdf){
-    showToast('PDF library එක load වී නැත.', true);
-    return;
-  }
-  const originalLabel = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'සකසමින්...';
+async function exportPDF(){
+  const t=$('printArea'),b=$('pdfBtn');if(!t||!window.html2canvas||!window.jspdf){toast('PDF library එක load වී නැත.',true);return}
+  const lbl=b.textContent;b.disabled=true;b.textContent='සකසමින්...';
   try{
-    const canvas = await html2canvas(target, { scale:2, backgroundColor:'#FBF9F3' });
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p','mm','a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 10;
-    const imgWidth = pageWidth - margin*2;
-    const imgHeight = canvas.height * imgWidth / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = margin;
-    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-    heightLeft -= (pageHeight - margin*2);
-
-    while(heightLeft > 0){
-      position = heightLeft - imgHeight + margin;
-      doc.addPage();
-      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-      heightLeft -= (pageHeight - margin*2);
-    }
-
-    doc.save(`poll-results-${fileDateStamp()}.pdf`);
-  } catch(err){
-    showToast('PDF සෑදීමේ දෝෂයක්: ' + err.message, true);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalLabel;
-  }
+    const c=await html2canvas(t,{scale:2,backgroundColor:'#FBF9F3'}),img=c.toDataURL('image/png');
+    const doc=new window.jspdf.jsPDF('p','mm','a4'),pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight(),m=10;
+    const w=pw-m*2,h=c.height*w/c.width;let left=h;
+    doc.addImage(img,'PNG',m,m,w,h);left-=ph-m*2;
+    while(left>0){doc.addPage();doc.addImage(img,'PNG',m,left-h+m,w,h);left-=ph-m*2}
+    doc.save(`poll-results-${stamp()}.pdf`);
+  }catch(e){toast('PDF සෑදීමේ දෝෂයක්: '+e.message,true)}
+  finally{b.disabled=false;b.textContent=lbl}
 }
-
-/* Excel export: builds a plain data sheet from the same reportData used on screen. */
-function downloadResultsAsExcel(){
-  const data = window._reportData;
-  const btn = document.getElementById('xlsxBtn');
-  if(!data || !window.XLSX){
-    showToast('Excel library එක load වී නැත.', true);
-    return;
-  }
+function exportXLSX(){
+  const d=window._rd;if(!d||!window.XLSX){toast('Excel library එක load වී නැත.',true);return}
   try{
-    const rows = [];
-    rows.push(['ඡන්ද විමසුමේ මාතෘකාව', data.pollTitle]);
-    rows.push(['ස්ථිතිය', data.isActive ? 'ක්‍රියාත්මකයි' : 'අක්‍රියයි']);
-    rows.push(['මුළු ප්‍රතිචාර දක්වූවන් ගණන', data.totalRespondents]);
-    rows.push(['වාර්තාව සකස් කළ දිනය', data.generatedAt.toLocaleString('si-LK')]);
-    rows.push([]);
-
-    data.questions.forEach((q, idx)=>{
-      rows.push([`${idx+1}. ${q.text}${q.allowMultiple ? ' (බහුවරණ)' : ''}`]);
-      rows.push(['මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව', q.respondents]);
-      rows.push(['විකල්පය', 'ඡන්ද ගණන (+)', 'ප්‍රතිශතය (+)', 'ඡන්ද ගණන (-)', 'ප්‍රතිශතය (-)']);
-      q.options.forEach(o=>{
-        rows.push([o.name, o.forCount, o.forPct + '%', o.againstCount, o.againstPct + '%']);
-      });
-      rows.push([]);
+    const r=[['ඡන්ද විමසුමේ මාතෘකාව',d.pollTitle],['ස්ථිතිය',d.isActive?'ක්‍රියාත්මකයි':'අක්‍රියයි'],['මුළු ප්‍රතිචාර දක්වූවන් ගණන',d.total],['වාර්තාව සකස් කළ දිනය',d.at.toLocaleString('si-LK')],[]];
+    d.questions.forEach((q,i)=>{
+      r.push([`${i+1}. ${q.text}${q.multi?' (බහුවරණ)':''}`],['මෙම ප්‍රශ්නයට පිළිතුරු දුන් සංඛ්‍යාව',q.respondents],['විකල්පය','ඡන්ද ගණන (+)','ප්‍රතිශතය (+)','ඡන්ද ගණන (-)','ප්‍රතිශතය (-)']);
+      q.options.forEach(o=>r.push([o.name,o.fc,o.fp+'%',o.ac,o.ap+'%']));r.push([]);
     });
+    const ws=XLSX.utils.aoa_to_sheet(r);ws['!cols']=[{wch:38},{wch:16},{wch:14},{wch:16},{wch:14}];
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Results');XLSX.writeFile(wb,`poll-results-${stamp()}.xlsx`);
+  }catch(e){toast('Excel සෑදීමේ දෝෂයක්: '+e.message,true)}
+}
+async function wipe(){
+  const{data}=await sb.from('polls').select('id');
+  if(data&&data.length){const{error}=await sb.from('polls').delete().in('id',data.map(p=>p.id));if(error)throw error}
+}
+async function resetAll(){
+  if(!confirm('සියලුම ඡන්ද විමසුම් සහ ඡන්ද ස්ථිරවම මකා දමන්නද?'))return;
+  try{await wipe();toast('සියලු දත්ත මකා දමන ලදී.');loadResults()}catch(e){toast('දෝෂයක්: '+e.message,true)}
+}
 
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:38},{wch:16},{wch:14},{wch:16},{wch:14}];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'ප්‍රතිඵල');
-    XLSX.writeFile(wb, `poll-results-${fileDateStamp()}.xlsx`);
-  } catch(err){
-    showToast('Excel සෑදීමේ දෝෂයක්: ' + err.message, true);
+/* ---------- CREATE POLL ---------- */
+let bq=[],qc=0,draft='';
+function initBuilder(){if(!bq.length)addQ();else draw()}
+function addQ(){qc++;bq.push({key:qc,text:'',multi:false,options:[{key:1,text:''},{key:2,text:''}]});draw()}
+const gq=k=>bq.find(q=>q.key===k);
+function delQ(k){bq=bq.filter(q=>q.key!==k);draw()}
+function addO(k){const q=gq(k);q.options.push({key:Math.max(0,...q.options.map(o=>o.key))+1,text:''});draw()}
+function delO(k,o){const q=gq(k);if(q.options.length>2){q.options=q.options.filter(x=>x.key!==o);draw()}}
+function draw(){
+  $('adminCreate').innerHTML=`<div class="card"><div class="poll-title" style="font-size:1.15rem">නව ඡන්ද විමසුමක් සාදන්න</div>
+  <p class="muted" style="margin-bottom:18px">සුරැකීමේදී වත්මන් විමසුම සහ එහි ඡන්ද සියල්ල ස්ථිරවම මකා දමා, මෙය ක්‍රියාත්මක විමසුම බවට පත් වේ.</p>
+  <div class="field"><label>විමසුමේ මාතෘකාව</label><input type="text" id="pt" placeholder="උදා: 2026 වාර්ෂික සමීක්ෂණය"></div>
+  <div id="qbs"></div><button class="sm" onclick="addQ()">+ ප්‍රශ්නයක් එකතු කරන්න</button>
+  <div style="margin-top:24px"><button class="btn" id="pub" onclick="publish()">පැරණි දත්ත මකා නව විමසුම ප්‍රකාශයට පත් කරන්න</button></div><div id="pErr" class="err"></div></div>`;
+  const t=$('pt');t.value=draft;t.oninput=e=>draft=e.target.value;
+  $('qbs').innerHTML=bq.map((q,i)=>`<div class="qbox"><div class="top"><div class="field" style="flex:1"><label>ප්‍රශ්නය ${i+1}</label>
+  <input type="text" value="${escA(q.text)}" placeholder="ප්‍රශ්නය ටයිප් කරන්න" oninput="gq(${q.key}).text=this.value"></div>
+  ${bq.length>1?`<button class="x" onclick="delQ(${q.key})">✕</button>`:''}</div>
+  <div style="margin:12px 0 8px">${q.options.map(o=>`<div class="orow"><input type="text" value="${escA(o.text)}" placeholder="විකල්පය" oninput="gq(${q.key}).options.find(x=>x.key==${o.key}).text=this.value">${q.options.length>2?`<button class="x" onclick="delO(${q.key},${o.key})">✕</button>`:''}</div>`).join('')}</div>
+  <button class="sm" onclick="addO(${q.key})">+ විකල්පයක් එකතු කරන්න</button>
+  <label class="multi"><input type="checkbox" ${q.multi?'checked':''} onchange="gq(${q.key}).multi=this.checked"> බහුවරණ තේරීමට අවසර දෙන්න (checkbox)</label></div>`).join('');
+}
+async function publish(){
+  const err=$('pErr');err.textContent='';const title=draft.trim();
+  if(!title){err.textContent='විමසුමේ මාතෘකාව අවශ්‍යයි.';return}
+  for(const q of bq){
+    if(!q.text.trim()){err.textContent='සියලුම ප්‍රශ්නවලට පෙළ අවශ්‍යයි.';return}
+    if(q.options.some(o=>!o.text.trim())){err.textContent='සියලුම විකල්පවලට පෙළ අවශ්‍යයි.';return}
   }
-}
-
-async function resetPollData(confirmFirst){
-  if(confirmFirst && !confirm('සියලුම ඡන්ද විමසුම් සහ ඡන්ද ස්ථිරවම මකා දමන්නද?')) return;
-  const { data: polls } = await sb.from('polls').select('id');
-  if(polls && polls.length){
-    const ids = polls.map(p=>p.id);
-    await sb.from('polls').delete().in('id', ids); // cascades to questions/options/votes
-  }
-  showToast('සියලු දත්ත මකා දමන ලදී.');
-  loadAdminResults();
-}
-
-/* ============================================================
-   ADMIN — CREATE NEW POLL
-   ============================================================ */
-let builderQuestions = [];
-let qCounter = 0;
-
-function renderPollBuilder(){
-  if(builderQuestions.length === 0){
-    addBuilderQuestion();
-  }
-  drawBuilder();
-}
-
-function addBuilderQuestion(){
-  qCounter++;
-  builderQuestions.push({
-    key: qCounter,
-    text: '',
-    allow_multiple: false,
-    options: [{key:1,text:''},{key:2,text:''}]
-  });
-  drawBuilder();
-}
-
-function removeBuilderQuestion(key){
-  builderQuestions = builderQuestions.filter(q=>q.key!==key);
-  drawBuilder();
-}
-
-function addBuilderOption(qKey){
-  const q = builderQuestions.find(q=>q.key===qKey);
-  const nextKey = q.options.length ? Math.max(...q.options.map(o=>o.key))+1 : 1;
-  q.options.push({key:nextKey, text:''});
-  drawBuilder();
-}
-
-function removeBuilderOption(qKey, oKey){
-  const q = builderQuestions.find(q=>q.key===qKey);
-  if(q.options.length <= 2) return;
-  q.options = q.options.filter(o=>o.key!==oKey);
-  drawBuilder();
-}
-
-function drawBuilder(){
-  const el = document.getElementById('adminCreate');
-  let html = `<div class="card">
-    <div class="section-label">නව ඡන්ද විමසුමක් සාදන්න</div>
-    <p class="muted" style="margin-bottom:18px;">සුරැකීමේදී වත්මන් විමසුම සහ එහි ඡන්ද සියල්ල ස්ථිරවම මකා දමා, මෙය ක්‍රියාත්මක විමසුම බවට පත් වේ.</p>
-    <div class="field">
-      <label>විමසුමේ මාතෘකාව</label>
-      <input type="text" id="pollTitleInput" placeholder="උදා: 2026 වාර්ෂික සමීක්ෂණය">
-    </div>
-    <div id="qBlocks"></div>
-    <button class="small-btn" onclick="addBuilderQuestion()">+ ප්‍රශ්නයක් එකතු කරන්න</button>
-    <div style="margin-top:24px;">
-      <button class="primary-btn" id="publishBtn" onclick="publishPoll()">පැරණි දත්ත මකා නව විමසුම ප්‍රකාශයට පත් කරන්න</button>
-    </div>
-    <div id="publishErr" class="err-text"></div>
-  </div>`;
-  el.innerHTML = html;
-
-  const titleInput = document.getElementById('pollTitleInput');
-  titleInput.value = window._draftTitle || '';
-  titleInput.addEventListener('input', e=> window._draftTitle = e.target.value);
-
-  const qBlocksEl = document.getElementById('qBlocks');
-  qBlocksEl.innerHTML = builderQuestions.map((q, qIdx)=>`
-    <div class="qb-block">
-      <div class="qb-top">
-        <div class="field" style="flex:1;">
-          <label>ප්‍රශ්නය ${qIdx+1}</label>
-          <input type="text" value="${escapeAttr(q.text)}" placeholder="ප්‍රශ්නය ටයිප් කරන්න"
-            oninput="updateQText(${q.key}, this.value)">
-        </div>
-        ${builderQuestions.length>1 ? `<button class="remove-x" onclick="removeBuilderQuestion(${q.key})" title="ප්‍රශ්නය ඉවත් කරන්න">✕</button>` : ''}
-      </div>
-      <div class="qb-opts">
-        ${q.options.map(o=>`
-          <div class="qb-opt-row">
-            <input type="text" value="${escapeAttr(o.text)}" placeholder="විකල්පය"
-              oninput="updateOText(${q.key}, ${o.key}, this.value)">
-            ${q.options.length>2 ? `<button class="remove-x" onclick="removeBuilderOption(${q.key}, ${o.key})">✕</button>` : ''}
-          </div>
-        `).join('')}
-      </div>
-      <button class="small-btn" onclick="addBuilderOption(${q.key})">+ විකල්පයක් එකතු කරන්න</button>
-      <label class="allow-multi">
-        <input type="checkbox" ${q.allow_multiple?'checked':''} onchange="updateQMulti(${q.key}, this.checked)">
-        බහුවරණ තේරීමට අවසර දෙන්න (checkbox)
-      </label>
-    </div>
-  `).join('');
-}
-
-function escapeAttr(str){
-  return (str ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-}
-function updateQText(key, val){ const q = builderQuestions.find(q=>q.key===key); if(q) q.text = val; }
-function updateQMulti(key, val){ const q = builderQuestions.find(q=>q.key===key); if(q) q.allow_multiple = val; }
-function updateOText(qKey, oKey, val){
-  const q = builderQuestions.find(q=>q.key===qKey);
-  if(!q) return;
-  const o = q.options.find(o=>o.key===oKey);
-  if(o) o.text = val;
-}
-
-async function publishPoll(){
-  const errEl = document.getElementById('publishErr');
-  errEl.textContent = '';
-  const title = (window._draftTitle || '').trim();
-
-  if(!title){ errEl.textContent = 'විමසුමේ මාතෘකාව අවශ්‍යයි.'; return; }
-  for(const q of builderQuestions){
-    if(!q.text.trim()){ errEl.textContent = 'සියලුම ප්‍රශ්නවලට පෙළ අවශ්‍යයි.'; return; }
-    for(const o of q.options){
-      if(!o.text.trim()){ errEl.textContent = 'සියලුම විකල්පවලට පෙළ අවශ්‍යයි.'; return; }
-    }
-  }
-  if(!confirm('පැරණි ඡන්ද විමසුම සහ එහි සියලුම ඡන්ද ස්ථිරවම මකා, මෙම නව විමසුම ප්‍රකාශයට පත් කරන්නද?')) return;
-
-  const btn = document.getElementById('publishBtn');
-  btn.disabled = true;
-  btn.textContent = 'සකසමින්...';
-
+  if(!confirm('පැරණි ඡන්ද විමසුම සහ එහි සියලුම ඡන්ද ස්ථිරවම මකා, මෙම නව විමසුම ප්‍රකාශයට පත් කරන්නද?'))return;
+  const btn=$('pub'),lbl=btn.textContent;btn.disabled=true;btn.textContent='සකසමින්...';
   try{
-    // 1. wipe old data
-    const { data: oldPolls } = await sb.from('polls').select('id');
-    if(oldPolls && oldPolls.length){
-      await sb.from('polls').delete().in('id', oldPolls.map(p=>p.id));
+    await wipe();
+    const{data:p,error:pe}=await sb.from('polls').insert({title,is_active:true}).select().single();if(pe)throw pe;
+    for(let i=0;i<bq.length;i++){
+      const q=bq[i];
+      const{data:nq,error:qe}=await sb.from('questions').insert({poll_id:p.id,question_text:q.text.trim(),allow_multiple:q.multi,position:i}).select().single();if(qe)throw qe;
+      const{error:oe}=await sb.from('options').insert(q.options.map((o,j)=>({question_id:nq.id,option_text:o.text.trim(),position:j})));if(oe)throw oe;
     }
-
-    // 2. create poll
-    const { data: newPoll, error: pErr } = await sb.from('polls')
-      .insert({ title, is_active: true }).select().single();
-    if(pErr) throw pErr;
-
-    // 3. create questions
-    for(let i=0; i<builderQuestions.length; i++){
-      const q = builderQuestions[i];
-      const { data: newQ, error: qErr } = await sb.from('questions')
-        .insert({ poll_id: newPoll.id, question_text: q.text.trim(), allow_multiple: q.allow_multiple, position: i })
-        .select().single();
-      if(qErr) throw qErr;
-
-      const optionRows = q.options.map((o, oi)=>({
-        question_id: newQ.id, option_text: o.text.trim(), position: oi
-      }));
-      const { error: oErr } = await sb.from('options').insert(optionRows);
-      if(oErr) throw oErr;
-    }
-
-    // reset builder + local "already voted" flags for cleanliness
-    builderQuestions = [];
-    window._draftTitle = '';
-    showToast('නව ඡන්ද විමසුම ප්‍රකාශයට පත් කරන ලදී.');
-    switchAdminTab('results');
-  } catch(err){
-    errEl.textContent = 'දෝෂයක්: ' + err.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'පැරණි දත්ත මකා නව විමසුම ප්‍රකාශයට පත් කරන්න';
-  }
+    bq=[];draft='';toast('නව ඡන්ද විමසුම ප්‍රකාශයට පත් කරන ලදී.');atab('results');
+  }catch(e){err.textContent='දෝෂයක්: '+e.message}
+  finally{btn.disabled=false;btn.textContent=lbl}
 }
 
-/* init */
-loadVoteView();
+loadVote();
 </script>
 </body>
 </html>
